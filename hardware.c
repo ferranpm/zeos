@@ -99,11 +99,11 @@ void enable_int(void)
 {
 __asm__ __volatile__(
   "movb %0,%%al\n\t"
-  "outb %%al,$0x20\n\t"
+  "outb %%al,$0x21\n\t"
   "call delay\n\t"
   "sti"
   : /*no output*/
-  : "i" (0xff)       /* 0xFF = 11111111 -> all bits disabled */
+  : "i" (0xfd)       /* 0xFF = 11111111 -> all bits disabled */
   : "%al" );
 }
 
