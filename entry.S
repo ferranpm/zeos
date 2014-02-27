@@ -61,9 +61,7 @@
     popl %ds;               \
     popl %es;               \
     popl %fs;               \
-    popl %gs;               \
-    movl %edx, %esi;          \
-    movl %edx, %ds;
+    popl %gs;
 
 #define EOI       \
 movb $0x20, %al;  \
