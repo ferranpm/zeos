@@ -45,35 +45,37 @@ int strlen(char *a)
 
 int write(int fd, char *buffer, int size)
 {
-    __asm__ __volatile__(
-        "movl 8(%%esp), %%ebx\n"
-        "movl 12(%%esp), %%ecx\n"
-        "movl 16(%%esp), %%edx\n"
-        "movl $0x04, %%eax\n"
-        "int $0x80\n"
-        :
-        : "g" (fd), "g" (buffer), "g" (size)
-    );
-    /* __asm__ __volatile__( */
-    /*     "popl %%ebx\n" */
-    /*     "popl %%ecx\n" */
-    /*     "popl %%edx\n" */
-    /*     "movl $0x04, %%eax\n" */
-    /*     "int $0x80\n" */
-    /*     "ret\n" */
-    /*     : */
-    /*     : "g" (fd), "g" (buffer), "g" (size) */
-    /* ); */
+  int ret;
+  __asm__ __volatile__(
+      "movl 8(%%ebp), %%ebx\n"
+      "movl 12(%%ebp), %%ecx\n"
+      "movl 16(%%ebp), %%edx\n"
+      "movl $0x04, %%eax\n"
+      "int $0x80\n"
+      : "=g" (ret)
+      : "g" (fd), "g" (buffer), "g" (size)
+      );
 
-    /* TODO: Parameter passing (parameters of the stack must be copied to
-     * the registers ebx, ecx, edx, esi, edi)
-     */
+  if (ret < 0) {
+    errno = -ret;
+    ret = -1;
+  }
+  return ret;
+}
 
-    /* TODO: Put the identifier of the write system call to eax (it is 4) */
-
-    /* TODO: Generate the trap (int $0x80) */
-
-    /* TODO: Process the result */
-
-    /* TODO: Return */
+void perror() {
+  char *msg_3 = "ERROR: Invalid file descriptor (!=1)\n";
+  char *msg_5 = "ERROR: Buffer points to NULL\n";
+  char *msg_7 = "ERROR: size <= 0\n";
+  switch (errno) {
+    case 3:
+      write(1, msg_3, strlen(msg_3));
+      break;
+    case 5:
+      write(1, msg_5, strlen(msg_5));
+      break;
+    case 7:
+      write(1, msg_7, strlen(msg_7));
+      break;
+  }
 }
