@@ -6,7 +6,6 @@
 #include <segment.h>
 #include <hardware.h>
 #include <io.h>
-
 #include <entry.h>
 
 #include <zeos_interrupt.h>
@@ -87,6 +86,8 @@ void setIdt()
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */
   setInterruptHandler(33, keyboard_handler, 0);
   setInterruptHandler(32, clock_handler, 0);
+
+  setTrapHandler(0x80, system_call_handler, 3);
 
   set_idt_reg(&idtR);
 }

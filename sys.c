@@ -45,3 +45,24 @@ int sys_fork()
 void sys_exit()
 {  
 }
+
+int sys_write(int fd, char *buffer, int size)
+{
+    /* Check user parameters */
+    if(check_fd(fd, ESCRIPTURA) < 0) return -3;
+    if (buffer == NULL) return -5;
+    if (size < 0) return -7;
+    
+    /* TODO: Copy the data from/to the user address space if needed */
+    /* TODO: Is it needed to call access_ok() to check if user space poinetr 
+     * buffer is valid?
+     */
+    char sys_buffer[size];
+    copy_from_user(buffer, sys_buffer, size);
+
+    /* Call the implemented requested service (sys_write_console) */
+    int ret = sys_write_console(sys_buffer, size);
+
+    /* Return the result */
+    return ret;
+}

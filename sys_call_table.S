@@ -6,7 +6,7 @@ ENTRY (sys_call_table)
 	.long sys_ni_syscall
 	.long sys_ni_syscall
 	.long sys_ni_syscall
-	.long sys_ni_syscall
+  .long sys_write
 	.long sys_ni_syscall// 5
 	.long sys_ni_syscall
 	.long sys_ni_syscall
@@ -44,3 +44,5 @@ ENTRY (sys_call_table)
 	.long sys_ni_syscall
 	.long sys_ni_syscall// 40
 	
+//MAX_SYSCALL = . - sys_call_table
+
