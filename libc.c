@@ -63,19 +63,21 @@ int write(int fd, char *buffer, int size)
   return ret;
 }
 
+char *error_msg[] = {
+  // 0
+  "",
+  "",
+  "",
+  "ERROR: Invalid file descriptor (!=1)\n",
+  "",
+  // 5
+  "ERROR: Buffer points to NULL\n",
+  "",
+  "ERROR: size <= 0\n",
+  "",
+  "",
+};
+
 void perror() {
-  char *msg_3 = "ERROR: Invalid file descriptor (!=1)\n";
-  char *msg_5 = "ERROR: Buffer points to NULL\n";
-  char *msg_7 = "ERROR: size <= 0\n";
-  switch (errno) {
-    case 3:
-      write(1, msg_3, strlen(msg_3));
-      break;
-    case 5:
-      write(1, msg_5, strlen(msg_5));
-      break;
-    case 7:
-      write(1, msg_7, strlen(msg_7));
-      break;
-  }
+  write(1, error_msg[errno], strlen(error_msg[errno]));
 }
