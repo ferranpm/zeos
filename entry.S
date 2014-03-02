@@ -34,6 +34,7 @@
 /**                                              **/
 /**************************************************/
 
+/* macro needed to save the remainning hardware context */
 #define SAVE_ALL             \
     pushl %gs;               \
     pushl %fs;               \
@@ -50,7 +51,8 @@
     movl %edx, %ds;          \
     movl %edx, %es
 
-#define RESTORE_ALL          \
+/* macro needed to restore the remainning hardware context */
+#define RESTORE_ALL         \
     popl %ebx;              \
     popl %ecx;              \
     popl %edx;              \
@@ -63,12 +65,19 @@
     popl %fs;               \
     popl %gs;
 
+/* End Of Interrupti (EOI): macro needed to solve hardware interrupts */
 #define EOI       \
 movb $0x20, %al;  \
 outb %al, $0x20;
 
+/* size of system call table */
 MAX_SYSCALL = 40
-/* system call handler */
+
+/* system call handler, one handler to solve all system calls 
+ * located at system call table
+ */
+
+/* TODO: Why "movl $-ENOSYS, %eax" generates a compiler error? */
 ENTRY(system_call_handler)
      SAVE_ALL                            // Save the current context
      cmpl $0, %eax;                      // Is syscall number negative?
@@ -78,31 +87,26 @@ ENTRY(system_call_handler)
      call *sys_call_table(, %eax, 0x04); // Call the corresponding service routine
      jmp fin;                            // Finish
 err:
-     // movl $-ENOSYS, %eax;                // Move to eax the ENOSYS error
-     movl $38, %eax;                // Move to eax the ENOSYS error
+     // movl $-ENOSYS, %eax;             // Move to eax the ENOSYS error
+     movl $38, %eax;                     // Move to eax the ENOSYS error
 fin:
      movl %eax, 0x18(%esp);              // Change the eax value in the stack
      RESTORE_ALL                         // Restore the context
      iret;
 
-/* TODO: Initialize the IDT for keyboard
- * interrupt. Use the provided function:
- * setInterruptHandler(33, keyboard_handler, 0)
- */
-
-/*
- * interrupt keyboard handler
- */
+/* keyboard interrupt handler */
 ENTRY(keyboard_handler)
-SAVE_ALL
-EOI
-call keyboard_routine;
-RESTORE_ALL
-iret;
+    SAVE_ALL
+    EOI
+    call keyboard_routine;
+    RESTORE_ALL
+    iret;
 
+/* clock interrupt handler */
 ENTRY(clock_handler)
-SAVE_ALL
-EOI
-call clock_routine;
-RESTORE_ALL
-iret;
+    SAVE_ALL
+    EOI
+    call clock_routine;
+    RESTORE_ALL
+    iret;
+

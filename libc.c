@@ -3,10 +3,23 @@
  */
 
 #include <libc.h>
-
 #include <types.h>
 
 int errno;
+
+/* TODO: Empties error_msg[0] for final release */
+char **error_msg = (char *[]) {
+    "OK\n",                                   /* 0 */
+    "",
+    "",
+    "ERROR: Invalid file descriptor (!=1)\n",
+    "",
+    "ERROR: Buffer points to NULL\n",         /* 5 */
+    "",
+    "ERROR: Size of buffer < 0\n",
+    "",
+    "",
+};
 
 void itoa(int a, char *b)
 {
@@ -45,39 +58,28 @@ int strlen(char *a)
 
 int write(int fd, char *buffer, int size)
 {
-  int ret;
-  __asm__ __volatile__(
-      "movl 8(%%ebp), %%ebx\n"
-      "movl 12(%%ebp), %%ecx\n"
-      "movl 16(%%ebp), %%edx\n"
-      "movl $0x04, %%eax\n"
-      "int $0x80\n"
-      : "=g" (ret)
-      : "g" (fd), "g" (buffer), "g" (size)
-      );
+    int ret;
+    __asm__ __volatile__(
+        "movl 0x08(%%ebp), %%ebx\n"
+        "movl 0x0c(%%ebp), %%ecx\n"
+        "movl 0x10(%%ebp), %%edx\n"
+        "movl $0x04, %%eax\n"
+        "int $0x80\n"
+        : "=g" (ret)
+        : "g" (fd), "g" (buffer), "g" (size)
+    );
 
-  if (ret < 0) {
-    errno = -ret;
-    ret = -1;
-  }
-  return ret;
+    /*
+    if (ret < 0) {
+      errno = -ret;
+      ret = -1;
+    }*/
+
+    errno = (ret >> 31) & -ret;
+    return (ret | (ret >> 31));
 }
-
-char *error_msg[] = {
-  // 0
-  "",
-  "",
-  "",
-  "ERROR: Invalid file descriptor (!=1)\n",
-  "",
-  // 5
-  "ERROR: Buffer points to NULL\n",
-  "",
-  "ERROR: size <= 0\n",
-  "",
-  "",
-};
 
 void perror() {
-  write(1, error_msg[errno], strlen(error_msg[errno]));
+    write(1, *(error_msg + errno), strlen(*(error_msg + errno)));
 }
+

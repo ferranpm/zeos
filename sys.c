@@ -1,16 +1,12 @@
 /*
  * sys.c - Syscalls implementation
  */
+
 #include <devices.h>
-
 #include <utils.h>
-
 #include <io.h>
-
 #include <mm.h>
-
 #include <mm_address.h>
-
 #include <sched.h>
 
 #define LECTURA 0
@@ -18,51 +14,49 @@
 
 int check_fd(int fd, int permissions)
 {
-  if (fd!=1) return -9; /*EBADF*/
-  if (permissions!=ESCRIPTURA) return -13; /*EACCES*/
-  return 0;
+    if (fd != 1) return -9; /* EBADF */
+    if (permissions != ESCRIPTURA) return -13; /* EACCES */
+    return 0;
 }
 
 int sys_ni_syscall()
 {
-	return -38; /*ENOSYS*/
+    return -38; /*ENOSYS*/
 }
 
 int sys_getpid()
 {
-	return current()->PID;
+    return current()->PID;
 }
 
 int sys_fork()
 {
-  int PID=-1;
+    int PID=-1;
 
-  // creates the child process
+    /* creates the child process */
   
-  return PID;
+    return PID;
 }
 
 void sys_exit()
-{  
+{
 }
 
 int sys_write(int fd, char *buffer, int size)
 {
     /* Check user parameters */
-    if(check_fd(fd, ESCRIPTURA) < 0) return -3;
+    /* TODO: Decide final error values for the final release */
+    if (check_fd(fd, ESCRIPTURA) < 0) return -3;
     if (buffer == NULL) return -5;
     if (size < 0) return -7;
     
-    /* TODO: Copy the data from/to the user address space if needed */
     /* TODO: Is it needed to call access_ok() to check if user space poinetr 
      * buffer is valid?
      */
     char sys_buffer[size];
     copy_from_user(buffer, sys_buffer, size);
 
-    /* Call the implemented requested service (sys_write_console) */
-    int ret = sys_write_console(sys_buffer, size);
-
-    /* Return the result */
-    return ret;
+    /* Call the requested service routine and return the result */
+    return sys_write_console(sys_buffer, size);
 }
+
