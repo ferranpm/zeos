@@ -2,11 +2,11 @@
  * system.c - 
  */
 
+#include <system.h>
 #include <segment.h>
 #include <types.h>
 #include <interrupt.h>
 #include <hardware.h>
-#include <system.h>
 #include <sched.h>
 #include <mm.h>
 #include <io.h>
@@ -18,6 +18,8 @@ int (*usr_main)(void) = (void *) PH_USER_START;
 unsigned int *p_sys_size = (unsigned int *) KERNEL_START;
 unsigned int *p_usr_size = (unsigned int *) KERNEL_START+1;
 unsigned int *p_rdtr = (unsigned int *) KERNEL_START+2;
+
+int zeos_ticks;
 
 /************************/
 /** Auxiliar functions **/
@@ -61,6 +63,7 @@ inline void set_seg_regs(Word data_sel, Word stack_sel, DWord esp)
 int __attribute__((__section__(".text.main"))) 
   main(void) 
 {
+
   set_eflags();
 
   /* Define the kernel segment registers */
@@ -94,6 +97,9 @@ int __attribute__((__section__(".text.main")))
 
   
   printk("Entering user mode..."); 
+
+  /* TODO: Is there where zeos_ticks must be initialized? */
+  zeos_ticks = 0;
   
   enable_int();
   /*

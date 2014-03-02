@@ -30,6 +30,8 @@ char char_map[] =
   '\0','\0'
 };
 
+extern int zeos_ticks;
+
 void setInterruptHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
 {
   /***********************************************************************/
@@ -94,16 +96,17 @@ void setIdt()
 
 void keyboard_routine()
 {
-  unsigned char key = inb(0x60);
-  if (key < 0x80) {
-    key = char_map[key];
-    if (key == '\0') key = 'C';
-    printc_xy(10, 20, key);
-  }
+    unsigned char key = inb(0x60);
+    if (key < 0x80) {
+        key = char_map[key];
+        if (key == '\0') key = 'C';
+        printc_xy(10, 20, key);
+    }
 }
 
 void clock_routine()
 {
-  zeos_show_clock();
+    ++zeos_ticks;
+    zeos_show_clock();
 }
 

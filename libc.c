@@ -75,11 +75,33 @@ int write(int fd, char *buffer, int size)
       ret = -1;
     }*/
 
+    /* TODO: Write a macro for this repetitve task */
     errno = (ret >> 31) & -ret;
     return (ret | (ret >> 31));
 }
 
 void perror() {
     write(1, *(error_msg + errno), strlen(*(error_msg + errno)));
+}
+
+int gettime()
+{
+    int ret;
+    __asm__ __volatile__(
+        "movl $0x0a, %%eax\n"
+        "int $0x80\n"
+        : "=g" (ret)
+        :
+    );
+
+    /*
+    if (ret < 0) {
+        errno = -ret;
+        ret = -1;
+    }*/
+
+    /* TODO: Write a macro for this repetitve task */
+    errno = (ret >> 31) & -ret;
+    return (ret | (ret >> 31));
 }
 
