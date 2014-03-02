@@ -1,0 +1,12 @@
+*.[os]
+bochsout.txt
+parport.out
+system.out
+system
+bootsect
+zeos.bin
+user
+user.out
+*~
+build/
+
