@@ -1,7 +1,6 @@
 #include <libc.h>
 
 char buff[24];
-
 int pid;
 
 /* Example of __asm__ syntax (not used in user code) */
@@ -20,7 +19,6 @@ int add(int par1, int par2) {
 }
 */
 
-
 int __attribute__ ((__section__(".text.main")))
   main(void)
 {
@@ -29,16 +27,23 @@ int __attribute__ ((__section__(".text.main")))
 
     /* Testing code for write() system call and perror() function */
     char *string = "Hola mon\n";
-    write(2, string, strlen(string));
-    perror();
-    write(1, string, strlen(string));
-    perror();
-    write(1, 0, strlen(string));
-    perror();
-    write(1, string, -3);
-    perror();
+    if (write(2, string, strlen(string)) < 0) perror();
+    if (write(1, string, strlen(string)) < 0) perror();
+    if (write(1, 0, strlen(string)) < 0) perror();
+    if (write(1, string, -3) < 0) perror();
 
-    while(1) {}
+    /* Testing code for gettime() system call */
+    /* TODO: How can we initialize a pointer to NULL in user code? */
+    char time;
+    
+    while(1) {
+        int ret = gettime();
+        if ((ret >= 0) && (ret % 500 == 0)) {
+            itoa(ret, &time);
+            write(1, &time, strlen(&time));
+            write(1, "\n", 2);
+        }
+    }
 
     return 0;
 }

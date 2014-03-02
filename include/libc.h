@@ -22,4 +22,7 @@ void exit();
 
 void perror();
 
+/* TODO: Is this system call declared in the proper file? */
+int gettime();
+
 #endif  /* __LIBC_H__ */
