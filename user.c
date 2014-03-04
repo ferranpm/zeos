@@ -3,22 +3,6 @@
 char buff[24];
 int pid;
 
-/* Example of __asm__ syntax (not used in user code) */
-/*
-int add(int par1, int par2) {
-    int suma = 0;
-    __asm__ __volatile(
-        "movl %1, %%eax\n"
-        "addl %2, %%eax\n"
-	"movl %%eax, %0\n"
-	: "=g" (suma)
-	: "g" (par1), "g" (par2)
-	: "ax", "memory"
-    );
-    return suma;
-}
-*/
-
 int __attribute__ ((__section__(".text.main")))
   main(void)
 {
@@ -35,6 +19,9 @@ int __attribute__ ((__section__(".text.main")))
     /* Testing code for gettime() system call */
     /* TODO: How can we initialize a pointer to NULL in user code? */
     char time;
+
+    /* Run a test suite provided by lab course */
+    // runjp();
     
     while(1) {
         int ret = gettime();

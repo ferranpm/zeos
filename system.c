@@ -42,18 +42,18 @@ int zeos_ticks;
  */
 inline void set_seg_regs(Word data_sel, Word stack_sel, DWord esp)
 {
-      esp = esp - 5*sizeof(DWord); /* To avoid overwriting task 1 */
-	  __asm__ __volatile__(
-		"cld\n\t"
-		"mov %0,%%ds\n\t"
-		"mov %0,%%es\n\t"
-		"mov %0,%%fs\n\t"
-		"mov %0,%%gs\n\t"
-		"mov %1,%%ss\n\t"
-		"mov %2,%%esp"
-		: /* no output */
-		: "r" (data_sel), "r" (stack_sel), "g" (esp) );
-
+    esp = esp - 5*sizeof(DWord); /* To avoid overwriting task 1 */
+	__asm__ __volatile__(
+	    "cld\n\t"
+	    "mov %0,%%ds\n\t"
+	    "mov %0,%%es\n\t"
+	    "mov %0,%%fs\n\t"
+	    "mov %0,%%gs\n\t"
+	    "mov %1,%%ss\n\t"
+	    "mov %2,%%esp"
+	    : /* no output */
+	    : "r" (data_sel), "r" (stack_sel), "g" (esp)
+    );
 }
 
 /*
@@ -68,7 +68,6 @@ int __attribute__((__section__(".text.main")))
 
   /* Define the kernel segment registers */
   set_seg_regs(__KERNEL_DS, __KERNEL_DS, INITIAL_ESP);
-
 
   printk("Kernel Loaded!    "); 
 
@@ -94,14 +93,17 @@ int __attribute__((__section__(".text.main")))
 
   /* Move user code/data now (after the page table initialization) */
   copy_data((void *) KERNEL_START + *p_sys_size, usr_main, *p_usr_size);
-
   
   printk("Entering user mode..."); 
 
-  /* TODO: Is there where zeos_ticks must be initialized? */
+  /*
+   * zeos_ticks must be initialized after memory initialization and just before
+   * enabling interrupts in order to measure the correct elapsed time
+   */
   zeos_ticks = 0;
   
   enable_int();
+
   /*
    * We return from a 'theorical' call to a 'call gate' to reduce our privileges
    * and going to execute 'magically' at 'usr_main'...
@@ -111,5 +113,4 @@ int __attribute__((__section__(".text.main")))
   /* The execution never arrives to this point */
   return 0;
 }
-
 
