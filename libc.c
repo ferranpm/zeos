@@ -4,84 +4,91 @@
 
 #include <libc.h>
 #include <types.h>
+#include <errno.h>
 
-int errno;
+/* 
+ * TODO: If a system call returns without errors, errno can be set to 0?
+ *       Or it must be set to previous value (last system call error)?
+ */
+#define SET_ERRNO_RETURN        \
+    errno = (ret >> 31) & -ret; \
+    return (ret | (ret >> 31));
 
-/* TODO: Empties error_msg[0] for final release */
-char **error_msg = (char *[]) {
-    "OK\n",                                   /* 0 */
-    "",
-    "",
-    "ERROR: Invalid file descriptor (!=1)\n",
-    "",
-    "ERROR: Buffer points to NULL\n",         /* 5 */
-    "",
-    "ERROR: Size of buffer < 0\n",
-    "",
-    "",
+int errno = 0;
+
+/* TODO: Decide how define position 0 */
+/* TODO: Complete the rest of error messages defined at errno.h */
+const char *sys_errlist[] = {
+   [0]      =  "Unknown Error\n",
+   [EBADF]  =  "Bad file number\n",
+   [EACCES] =  "Permission denied\n",
+   [EFAULT] =  "Bad addresss\n",
+   [EINVAL] =  "Invalid argument\n",
 };
 
 void itoa(int a, char *b)
 {
-  int i, i1;
-  char c;
+    int i, i1;
+    char c;
+
+    if (a == 0) {
+        b[0] = '0';
+        b[1] = 0;
+        return;
+    }
   
-  if (a==0) { b[0]='0'; b[1]=0; return ;}
+    i=0;
+    while (a > 0) {
+        b[i] = (a % 10) + '0';
+        a = a / 10;
+        i++;
+    }  
   
-  i=0;
-  while (a>0)
-  {
-    b[i]=(a%10)+'0';
-    a=a/10;
-    i++;
-  }
-  
-  for (i1=0; i1<i/2; i1++)
-  {
-    c=b[i1];
-    b[i1]=b[i-i1-1];
-    b[i-i1-1]=c;
-  }
-  b[i]=0;
+    for (i1 = 0; i1 < i/2; i1++) {
+        c=b[i1];
+        b[i1]=b[i-i1-1];
+        b[i-i1-1]=c;
+    }
+
+    b[i]=0;
 }
 
 int strlen(char *a)
 {
-  int i;
+    int i = 0;
   
-  i=0;
+    while (a[i] != 0) i++;
   
-  while (a[i]!=0) i++;
-  
-  return i;
+    return i;
 }
 
 int write(int fd, char *buffer, int size)
 {
     int ret;
+
+    /* TODO: Figure out why the content of ebx is not saved */
+    /*
     __asm__ __volatile__(
         "movl 0x08(%%ebp), %%ebx\n"
         "movl 0x0c(%%ebp), %%ecx\n"
         "movl 0x10(%%ebp), %%edx\n"
         "movl $0x04, %%eax\n"
         "int $0x80\n"
-        : "=g" (ret)
-        : "g" (fd), "g" (buffer), "g" (size)
+        : "=a" (ret)
+    );
+    */
+
+    __asm__ __volatile__ (
+        "int $0x80\n\t"
+        : "=a" (ret)
+        : "b" (fd), "c" (buffer), "d" (size), "a" (0x04)
     );
 
-    /*
-    if (ret < 0) {
-      errno = -ret;
-      ret = -1;
-    }*/
-
-    /* TODO: Write a macro for this repetitve task */
-    errno = (ret >> 31) & -ret;
-    return (ret | (ret >> 31));
+    SET_ERRNO_RETURN
 }
 
 void perror() {
-    write(1, *(error_msg + errno), strlen(*(error_msg + errno)));
+    write(1, *(sys_errlist + errno), strlen(*(sys_errlist + errno)));
 }
 
 int gettime()
@@ -90,18 +97,9 @@ int gettime()
     __asm__ __volatile__(
         "movl $0x0a, %%eax\n"
         "int $0x80\n"
-        : "=g" (ret)
-        :
+        : "=a" (ret)
     );
 
-    /*
-    if (ret < 0) {
-        errno = -ret;
-        ret = -1;
-    }*/
-
-    /* TODO: Write a macro for this repetitve task */
-    errno = (ret >> 31) & -ret;
-    return (ret | (ret >> 31));
+    SET_ERRNO_RETURN
 }
 

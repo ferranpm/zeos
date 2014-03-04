@@ -100,6 +100,8 @@ void keyboard_routine()
     if (key < 0x80) {
         key = char_map[key];
         if (key == '\0') key = 'C';
+
+        /* TODO: Is this arbitrary position (10,20) valid for E1 checkpoint? */
         printc_xy(10, 20, key);
     }
 }
@@ -107,6 +109,8 @@ void keyboard_routine()
 void clock_routine()
 {
     ++zeos_ticks;
+
+    /* TODO: Is this call needed for E1 checkpoint? */
     zeos_show_clock();
 }
 
