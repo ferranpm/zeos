@@ -53,9 +53,8 @@ int sys_write(int fd, char *buffer, int size)
     if (buffer == NULL) return -EFAULT;
     if (size < 0) return -EINVAL;
     
-    /* TODO: Is it needed to call access_ok() to check if user space poinetr 
-     * buffer is valid?
-     */
+    /* access_ok() must be called to check the user space poinetr buffer */
+
     char sys_buffer[size];
     copy_from_user(buffer, sys_buffer, size);
 

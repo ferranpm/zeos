@@ -17,13 +17,11 @@ int __attribute__ ((__section__(".text.main")))
     /* if (write(1, string, -3) < 0) perror(); */
 
     /* Testing code for gettime() system call */
-    /* TODO: How can we initialize a pointer to NULL in user code? */
-    char time;
+    /* char time; */
 
     /* Run a test suite provided by lab course */
     runjp();
     
-
     while(1) {
         /* int ret = gettime(); */
         /* if ((ret >= 0) && (ret % 500 == 0)) { */
