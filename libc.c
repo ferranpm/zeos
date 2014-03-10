@@ -6,20 +6,17 @@
 #include <types.h>
 #include <errno.h>
 
-/* 
- * TODO: If a system call returns without errors, errno can be set to 0?
- *       Or it must be set to previous value (last system call error)?
- */
-#define SET_ERRNO_RETURN        \
-    errno = (ret >> 31) & -ret; \
-    return (ret | (ret >> 31));
+/* Useful macro to set errno and return expected value from each system call */
+#define SET_ERRNO_RETURN                     \
+    int mask = ret >> 31;                    \
+    errno = (mask & -ret) | (~mask & errno); \
+    return (ret | mask);
 
 int errno = 0;
 
-/* TODO: Decide how define position 0 */
 /* TODO: Complete the rest of error messages defined at errno.h */
 const char *sys_errlist[] = {
-   [0]      =  "Unknown Error\n",
+   [0]      =  "Unknown error\n",
    [EBADF]  =  "Bad file number\n",
    [EACCES] =  "Permission denied\n",
    [EFAULT] =  "Bad addresss\n",
@@ -65,19 +62,6 @@ int strlen(char *a)
 int write(int fd, char *buffer, int size)
 {
     int ret;
-
-    /* TODO: Figure out why the content of ebx is not saved */
-    /*
-    __asm__ __volatile__(
-        "movl 0x08(%%ebp), %%ebx\n"
-        "movl 0x0c(%%ebp), %%ecx\n"
-        "movl 0x10(%%ebp), %%edx\n"
-        "movl $0x04, %%eax\n"
-        "int $0x80\n"
-        : "=a" (ret)
-    );
-    */
-
     __asm__ __volatile__ (
         "int $0x80\n\t"
         : "=a" (ret)
@@ -95,9 +79,9 @@ int gettime()
 {
     int ret;
     __asm__ __volatile__(
-        "movl $0x0a, %%eax\n"
         "int $0x80\n"
         : "=a" (ret)
+        : "a" (0x04)
     );
 
     SET_ERRNO_RETURN
