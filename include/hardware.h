@@ -21,7 +21,7 @@ void return_gate(Word ds, Word ss, DWord esp, Word cs, DWord eip);
  *    registro 0x21:
  *    7 6 5 4 3 2 1 0
  *    x x x x x x x x
- *    
+ *
  *    bit 0 : Timer
  *    bit 1 : Keyboard
  *    bit 2 : PIC cascading
@@ -30,7 +30,7 @@ void return_gate(Word ds, Word ss, DWord esp, Word cs, DWord eip);
  *    bit 5 : Reserved
  *    bit 6 : Floppy disk
  *    bit 7 : Reserved
- * 
+ *
  *
  *   x = 0 -> activada
  *   x = 1 -> no activada

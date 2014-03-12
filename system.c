@@ -1,5 +1,5 @@
 /*
- * system.c - 
+ * system.c -
  */
 
 #include <system.h>
@@ -38,7 +38,7 @@ int zeos_ticks;
  */
 
 /*
- * This function MUST be 'inline' because it modifies the %esp 
+ * This function MUST be 'inline' because it modifies the %esp
  */
 inline void set_seg_regs(Word data_sel, Word stack_sel, DWord esp)
 {
@@ -57,11 +57,11 @@ inline void set_seg_regs(Word data_sel, Word stack_sel, DWord esp)
 }
 
 /*
- *   Main entry point to ZEOS Operatin System 
+ *   Main entry point to ZEOS Operatin System
  */
 
-int __attribute__((__section__(".text.main"))) 
-  main(void) 
+int __attribute__((__section__(".text.main")))
+  main(void)
 {
 
   set_eflags();
@@ -69,7 +69,7 @@ int __attribute__((__section__(".text.main")))
   /* Define the kernel segment registers */
   set_seg_regs(__KERNEL_DS, __KERNEL_DS, INITIAL_ESP);
 
-  printk("Kernel Loaded!    "); 
+  printk("Kernel Loaded!    ");
 
   /* Initialize hardware data */
   setGdt(); /* Definicio de la taula de segments de memoria */
@@ -93,15 +93,15 @@ int __attribute__((__section__(".text.main")))
 
   /* Move user code/data now (after the page table initialization) */
   copy_data((void *) KERNEL_START + *p_sys_size, usr_main, *p_usr_size);
-  
-  printk("Entering user mode..."); 
+
+  printk("Entering user mode...");
 
   /*
    * zeos_ticks must be initialized after memory initialization and just before
    * enabling interrupts in order to measure the correct elapsed time
    */
   zeos_ticks = 0;
-  
+
   enable_int();
 
   /*

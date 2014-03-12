@@ -37,7 +37,7 @@ int sys_fork()
     int PID=-1;
 
     /* creates the child process */
-  
+
     return PID;
 }
 
@@ -52,7 +52,7 @@ int sys_write(int fd, char *buffer, int size)
     if (err < 0) return err;
     if (buffer == NULL) return -EFAULT;
     if (size < 0) return -EINVAL;
-    
+
     /* access_ok() must be called to check the user space poinetr buffer */
 
     char sys_buffer[size];

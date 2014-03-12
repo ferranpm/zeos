@@ -7,7 +7,7 @@ ENTRY(main)
 SECTIONS
 {
   . = 0x100000; /* User CODE will start at this address */
-    
+
   .text.main : { *(.text.main) }
   .text : { *(.text) }
 

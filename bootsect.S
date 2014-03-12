@@ -1,5 +1,5 @@
 !
-!	bootsect.s    
+!	bootsect.s
 !
 ! bootsect.s � la versi�simplificada del bootsect.s original de Linux.
 ! L'arxiu compilat hauria d'ocupar, sense les capceleres, exactament 512

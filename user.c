@@ -21,7 +21,7 @@ int __attribute__ ((__section__(".text.main")))
 
     /* Run a test suite provided by lab course */
     runjp();
-    
+
     while(1) {
         /* int ret = gettime(); */
         /* if ((ret >= 0) && (ret % 500 == 0)) { */

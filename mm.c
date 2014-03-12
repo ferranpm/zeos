@@ -18,7 +18,7 @@ Register    gdtR;
 
 /* PAGING */
 /* Variables containing the page directory and the page table */
-  
+
 page_table_entry dir_pages[NR_TASKS][TOTAL_PAGES]
   __attribute__((__section__(".data.task")));
 
@@ -26,7 +26,7 @@ page_table_entry pagusr_table[NR_TASKS][TOTAL_PAGES]
   __attribute__((__section__(".data.task")));
 
 /* TSS */
-TSS         tss; 
+TSS         tss;
 
 
 
@@ -35,7 +35,7 @@ TSS         tss;
 /***********************************************/
 
 /* Init page table directory */
-  
+
 void init_dir_pages()
 {
 int i;
@@ -63,7 +63,7 @@ for (j=0; j< NR_TASKS; j++) {
       pagusr_table[j][i].entry = 0;
     }
   /* Init kernel pages */
-  for (i=1; i<NUM_PAG_KERNEL; i++) // Leave the page inaccessible to comply with NULL convention 
+  for (i=1; i<NUM_PAG_KERNEL; i++) // Leave the page inaccessible to comply with NULL convention
     {
       // Logical page equal to physical page (frame)
       pagusr_table[j][i].bits.pbase_addr = i;
@@ -78,7 +78,7 @@ for (j=0; j< NR_TASKS; j++) {
 /* Initialize pages for initial process (user pages) */
 void set_user_pages( struct task_struct *task )
 {
- int pag; 
+ int pag;
  int new_ph_pag;
  page_table_entry * process_PT =  get_PT(task);
 
@@ -91,8 +91,8 @@ void set_user_pages( struct task_struct *task )
   	process_PT[PAG_LOG_INIT_CODE_P0+pag].bits.user = 1;
   	process_PT[PAG_LOG_INIT_CODE_P0+pag].bits.present = 1;
   }
-  
-  /* DATA */ 
+
+  /* DATA */
   for (pag=0;pag<NUM_PAG_DATA;pag++){
 	new_ph_pag=alloc_frame();
   	process_PT[PAG_LOG_INIT_DATA_P0+pag].entry = 0;
@@ -119,7 +119,7 @@ void set_cr3(page_table_entry * dir)
 })
 #define write_cr0(x) \
          __asm__("movl %0,%%cr0": :"r" (x));
-         
+
 /* Enable paging, modifying the CR0 register */
 void set_pe_flag()
 {
@@ -190,7 +190,7 @@ void setTSS()
   set_task_reg(KERNEL_TSS);
 }
 
- 
+
 /* Initializes the ByteMap of free physical pages.
  * The kernel pages are marked as used */
 int init_frames( void )
@@ -207,7 +207,7 @@ int init_frames( void )
     return 0;
 }
 
-/* alloc_frame - Search a free physical page (== frame) and mark it as USED_FRAME. 
+/* alloc_frame - Search a free physical page (== frame) and mark it as USED_FRAME.
  * Returns the frame number or -1 if there isn't any frame available. */
 int alloc_frame( void )
 {
@@ -217,7 +217,7 @@ int alloc_frame( void )
             phys_mem[i] = USED_FRAME;
             return i;
         }
-        i += 2; /* NOTE: There will be holes! This is intended. 
+        i += 2; /* NOTE: There will be holes! This is intended.
 			DO NOT MODIFY! */
     }
 
@@ -263,5 +263,5 @@ void del_ss_pag(page_table_entry *PT, unsigned logical_page)
 
 /* get_frame - Returns the physical frame associated to page 'logical_page' */
 unsigned int get_frame (page_table_entry *PT, unsigned int logical_page){
-     return PT[logical_page].bits.pbase_addr; 
+     return PT[logical_page].bits.pbase_addr;
 }

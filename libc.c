@@ -1,5 +1,5 @@
 /*
- * libc.c 
+ * libc.c
  */
 
 #include <libc.h>
@@ -33,14 +33,14 @@ void itoa(int a, char *b)
         b[1] = 0;
         return;
     }
-  
+
     i=0;
     while (a > 0) {
         b[i] = (a % 10) + '0';
         a = a / 10;
         i++;
-    }  
-  
+    }
+
     for (i1 = 0; i1 < i/2; i1++) {
         c=b[i1];
         b[i1]=b[i-i1-1];
@@ -53,9 +53,9 @@ void itoa(int a, char *b)
 int strlen(char *a)
 {
     int i = 0;
-  
+
     while (a[i] != 0) i++;
-  
+
     return i;
 }
 

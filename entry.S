@@ -74,7 +74,7 @@ outb %al, $0x20
 MAX_SYSCALL = 40
 
 /*
- * system call handler, one handler to solve all system calls 
+ * system call handler, one handler to solve all system calls
  * located at system call table
  */
 

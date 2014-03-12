@@ -9,7 +9,7 @@
 #include <mm_address.h>
 #include <sched.h>
 
- 
+
 #define FREE_FRAME 0
 #define USED_FRAME 1
 /* Bytemap to mark the free physical pages */
@@ -26,7 +26,7 @@ void set_user_pages( struct task_struct *task );
 
 extern Descriptor  *gdt;
 
-extern TSS         tss; 
+extern TSS         tss;
 
 void init_mm();
 void set_cr3(page_table_entry *dir);
