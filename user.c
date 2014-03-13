@@ -20,7 +20,7 @@ int __attribute__ ((__section__(".text.main")))
     /* char time; */
 
     /* Run a test suite provided by lab course */
-    runjp();
+    /* runjp(); */
 
     while(1) {
         /* int ret = gettime(); */
