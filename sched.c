@@ -19,6 +19,8 @@ struct list_head blocked;
 struct list_head freequeue;
 struct list_head readyqueue;
 
+struct task_struct *idle_task;
+
 unsigned int pid = 0;
 
 /* get_DIR - Returns the Page Directory address for task 't' */
@@ -58,11 +60,11 @@ void cpu_idle(void)
 void init_idle (void)
 {
     struct list_head *first = list_first(&freequeue);
-    struct task_struct *idle = list_head_to_task_struct(first);
+    idle_task = list_head_to_task_struct(first);
     list_del(first);
-    idle->PID = pid++;
-    allocate_DIR(idle);
-    idle->quantum = 5;
+    idle_task->PID = pid++;
+    allocate_DIR(idle_task);
+    idle_task->quantum = 5;
 }
 
 void init_task1(void)

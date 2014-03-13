@@ -28,6 +28,7 @@ union task_union {
 
 extern union task_union task[NR_TASKS]; /* Task array */
 extern struct task_struct *idle_task;
+extern unsigned int pid;
 
 /* Queues needed to implement process management */
 /* TODO: Where is better to declare extern variables, on .h or .c files? */
