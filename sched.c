@@ -65,6 +65,9 @@ void init_idle (void)
     idle_task->PID = pid++;
     allocate_DIR(idle_task);
     idle_task->quantum = 5;
+    union task_union *p = (union task_union*)idle_task;
+    p->stack[KERNEL_STACK_SIZE-1] = cpu_idle;
+    p->stack[KERNEL_STACK_SIZE-2] = 0;
 }
 
 void init_task1(void)
@@ -88,6 +91,10 @@ void init_sched(){
     for (i = 0; i < NR_TASKS; i++) {
         list_add_tail(&(task[i].task.list), &freequeue);
     }
+}
+
+void task_switch(union task_union*t) {
+
 }
 
 struct task_struct* current()
