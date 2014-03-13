@@ -13,7 +13,7 @@
 #define LECTURA 0
 #define ESCRIPTURA 1
 
-extern int zeos_ticks;
+extern unsigned int zeos_ticks;
 
 int check_fd(int fd, int permissions)
 {

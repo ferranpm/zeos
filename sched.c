@@ -10,15 +10,16 @@ union task_union task[NR_TASKS]
   __attribute__((__section__(".data.task")));
 
 
-#if 0
 struct task_struct *list_head_to_task_struct(struct list_head *l)
 {
   return list_entry( l, struct task_struct, list);
 }
-#endif
 
-extern struct list_head blocked;
+struct list_head blocked;
+struct list_head freequeue;
+struct list_head readyqueue;
 
+unsigned int pid = 0;
 
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t)
@@ -56,16 +57,35 @@ void cpu_idle(void)
 
 void init_idle (void)
 {
-
+    struct list_head *first = list_first(&freequeue);
+    struct task_struct *idle = list_head_to_task_struct(first);
+    list_del(first);
+    idle->PID = pid++;
+    allocate_DIR(idle);
+    idle->quantum = 5;
 }
 
 void init_task1(void)
 {
+    struct list_head *first = list_first(&freequeue);
+    struct task_struct *task = list_head_to_task_struct(first);
+    list_del(first);
+    task->PID = pid++;
+    allocate_DIR(task);
+    task->quantum = 5;
 }
 
 
 void init_sched(){
 
+    /* TODO: Do we initialize theses queues here or inside specific function? */
+    INIT_LIST_HEAD(&freequeue);
+    INIT_LIST_HEAD(&readyqueue);
+
+    int i;
+    for (i = 0; i < NR_TASKS; i++) {
+        list_add_tail(&(task[i].task.list), &freequeue);
+    }
 }
 
 struct task_struct* current()
