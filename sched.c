@@ -21,7 +21,7 @@ struct list_head readyqueue;
 
 struct task_struct *idle_task;
 
-unsigned int pid = 0;
+unsigned int curr_pid = 1;
 
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t)
@@ -57,14 +57,27 @@ void cpu_idle(void)
 	}
 }
 
+void init_freequeue() {
+    INIT_LIST_HEAD(&freequeue);
+    
+    int i;
+    for (i = 0; i < NR_TASKS; i++) {
+        list_add_tail(&(task[i].task.list), &freequeue);
+    }
+}
+
+void init_readyqueue() {
+    INIT_LIST_HEAD(&readyqueue);
+}
+
 void init_idle (void)
 {
     struct list_head *first = list_first(&freequeue);
     idle_task = list_head_to_task_struct(first);
     list_del(first);
-    idle_task->PID = pid++;
+    idle_task->PID = 0; /* Its PID always is defiend as 0 */
     allocate_DIR(idle_task);
-    idle_task->quantum = 5;
+    idle_task->quantum = DEFAULT_QUANTUM;
     union task_union *p = (union task_union*)idle_task;
     p->stack[KERNEL_STACK_SIZE-1] = cpu_idle;
     p->stack[KERNEL_STACK_SIZE-2] = 0;
@@ -75,22 +88,18 @@ void init_task1(void)
     struct list_head *first = list_first(&freequeue);
     struct task_struct *task = list_head_to_task_struct(first);
     list_del(first);
-    task->PID = pid++;
+    task->PID = 1; /* Its PID always is defiend as 1 */
     allocate_DIR(task);
-    task->quantum = 5;
+    task->quantum = DEFAULT_QUANTUM;
 }
 
 
-void init_sched(){
+void init_sched() {
+    
+    /* Initializes required structures to perform the process scheduling */
+    init_freequeue();
+    init_readyqueue();
 
-    /* TODO: Do we initialize theses queues here or inside specific function? */
-    INIT_LIST_HEAD(&freequeue);
-    INIT_LIST_HEAD(&readyqueue);
-
-    int i;
-    for (i = 0; i < NR_TASKS; i++) {
-        list_add_tail(&(task[i].task.list), &freequeue);
-    }
 }
 
 void task_switch(union task_union*t) {

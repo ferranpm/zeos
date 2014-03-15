@@ -12,6 +12,9 @@
 #define NR_TASKS 10
 #define KERNEL_STACK_SIZE 1024
 
+/* TODO: Sets properly the default value for quantum (process scheduling) */
+#define DEFAULT_QUANTUM 5
+
 enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
 
 struct task_struct {
@@ -28,10 +31,9 @@ union task_union {
 
 extern union task_union task[NR_TASKS]; /* Task array */
 extern struct task_struct *idle_task;
-extern unsigned int pid;
+extern unsigned int curr_pid;           /* Current available PID to assign to processes */
 
-/* Queues needed to implement process management */
-/* TODO: Where is better to declare extern variables, on .h or .c files? */
+/* Structures needed to implement process management */
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
 
@@ -42,6 +44,8 @@ extern struct list_head readyqueue;
 /* Initializes required data for the initial process */
 struct task_struct * current();
 struct task_struct *list_head_to_task_struct(struct list_head *l);
+void init_freequeue(void);
+void init_readyqueue(void);
 void init_task1(void);
 void init_idle(void);
 void init_sched(void);
@@ -57,3 +61,4 @@ int needs_sched_rr();
 void update_sched_data_rr();
 
 #endif  /* __SCHED_H__ */
+
