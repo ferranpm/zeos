@@ -21,6 +21,7 @@ struct task_struct {
     int PID;                               /* Process ID */
     page_table_entry * dir_pages_baseAddr; /* Directory base address */
     unsigned int quantum;
+    unsigned long *kernel_esp;
     struct list_head list;
 };
 
@@ -30,7 +31,7 @@ union task_union {
 };
 
 extern union task_union task[NR_TASKS]; /* Task array */
-extern struct task_struct *idle_task;
+extern struct task_struct *idle_task;   /* Idle process */
 extern unsigned int curr_pid;           /* Current available PID to assign to processes */
 
 /* Structures needed to implement process management */
@@ -40,6 +41,20 @@ extern struct list_head readyqueue;
 #define KERNEL_ESP(t) (DWord) &(t)->stack[KERNEL_STACK_SIZE]
 #define INITIAL_ESP KERNEL_ESP(&task[1])
 
+/* Macros needed to save and restore context during process switch */
+#define SAVE_PARTIAL_CONTEXT \
+    __asm__ __volatile__(    \
+        "pushl %esi\n"       \
+        "pushl %edi\n"       \
+        "pushl %ebx\n"       \
+            );
+ 
+#define RESTORE_PARTIAL_CONTEXT \
+    __asm__ __volatile__(       \
+        "popl %ebx\n"           \
+        "popl %edi\n"           \
+        "popl %esi\n"           \
+            );
 
 /* Initializes required data for the initial process */
 struct task_struct * current();
@@ -49,7 +64,7 @@ void init_readyqueue(void);
 void init_task1(void);
 void init_idle(void);
 void init_sched(void);
-void task_switch(union task_union*t);
+void task_switch(union task_union *t);
 int allocate_DIR(struct task_struct *t);
 page_table_entry * get_PT (struct task_struct *t) ;
 page_table_entry * get_DIR (struct task_struct *t) ;

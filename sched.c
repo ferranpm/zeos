@@ -9,11 +9,12 @@
 union task_union task[NR_TASKS]
   __attribute__((__section__(".data.task")));
 
-
+#if 1
 struct task_struct *list_head_to_task_struct(struct list_head *l)
 {
   return list_entry( l, struct task_struct, list);
 }
+#endif
 
 struct list_head blocked;
 struct list_head freequeue;
@@ -21,7 +22,8 @@ struct list_head readyqueue;
 
 struct task_struct *idle_task;
 
-unsigned int curr_pid = 1;
+/* Values 0 and 1 are reserved for idle and initial process respectively */
+unsigned int curr_pid = 2;
 
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t)
@@ -39,11 +41,8 @@ page_table_entry * get_PT (struct task_struct *t)
 int allocate_DIR(struct task_struct *t)
 {
 	int pos;
-
 	pos = ((int)t-(int)task)/sizeof(union task_union);
-
 	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos];
-
 	return 1;
 }
 
@@ -70,40 +69,77 @@ void init_readyqueue() {
     INIT_LIST_HEAD(&readyqueue);
 }
 
-void init_idle (void)
-{
+/* TODO: Debugg it futher */
+void init_idle (void) {
     struct list_head *first = list_first(&freequeue);
     idle_task = list_head_to_task_struct(first);
     list_del(first);
-    idle_task->PID = 0; /* Its PID always is defiend as 0 */
-    allocate_DIR(idle_task);
+
+    /* Its PID always is defiend as 0 */
+    idle_task->PID = 0;
+    
     idle_task->quantum = DEFAULT_QUANTUM;
-    union task_union *p = (union task_union*)idle_task;
-    p->stack[KERNEL_STACK_SIZE-1] = cpu_idle;
-    p->stack[KERNEL_STACK_SIZE-2] = 0;
+    
+    /* TODO: Why is this call necessary? */
+    allocate_DIR(idle_task);
+
+    union task_union *idle_task_stack = (union task_union *)idle_task;
+    idle_task_stack->stack[KERNEL_STACK_SIZE-1] = (unsigned long)&cpu_idle;
+    idle_task_stack->stack[KERNEL_STACK_SIZE-2] = 0;
+
+    idle_task->kernel_esp = (unsigned long *)&(idle_task_stack->stack[KERNEL_STACK_SIZE-2]);
 }
 
-void init_task1(void)
-{
+/* TODO: Debugg it futher */
+void init_task1(void) {
     struct list_head *first = list_first(&freequeue);
-    struct task_struct *task = list_head_to_task_struct(first);
+    struct task_struct *pcb_ini_task = list_head_to_task_struct(first);
     list_del(first);
-    task->PID = 1; /* Its PID always is defiend as 1 */
-    allocate_DIR(task);
-    task->quantum = DEFAULT_QUANTUM;
-}
+    
+    /* Its PID always is defiend as 1 */
+    pcb_ini_task->PID = 1;
+    
+    pcb_ini_task->quantum = DEFAULT_QUANTUM;
 
+    allocate_DIR(pcb_ini_task);
+    set_user_pages(pcb_ini_task);
+    set_cr3(get_DIR(pcb_ini_task));
+}
 
 void init_sched() {
     
     /* Initializes required structures to perform the process scheduling */
     init_freequeue();
     init_readyqueue();
-
 }
 
-void task_switch(union task_union*t) {
+/* TODO: Debugg it futher */
+void inner_task_switch(union task_union *t) {
+    struct task_struct *curr_task_pcb = current();
+    tss.esp0 = (unsigned long)&(t->stack[KERNEL_STACK_SIZE]);
 
+    /* TODO: Is it necessary to check anything before sets cr3 register? */
+    set_cr3(get_DIR(curr_task_pcb));
+
+    __asm__ __volatile__(
+        "mov %%ebp,%0\n"
+        "mov %1,%%esp\n"
+        "pop %%ebp\n"
+        "ret\n"
+        : /* no output */
+        : "r" (curr_task_pcb->kernel_esp), "r" (t->task.kernel_esp)
+    );
+}
+
+void task_switch(union task_union *t) {
+
+    /* Saves the registers esi, edi and ebx manually */
+    SAVE_PARTIAL_CONTEXT
+        
+    inner_task_switch(t);
+
+    /* Restores the previously saved registers */
+    RESTORE_PARTIAL_CONTEXT
 }
 
 struct task_struct* current()
