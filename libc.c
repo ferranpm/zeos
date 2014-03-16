@@ -62,8 +62,8 @@ int strlen(char *a)
 int write(int fd, char *buffer, int size)
 {
     int ret;
-    __asm__ __volatile__ (
-        "int $0x80\n\t"
+    __asm__ __volatile__(
+        "int $0x80\n"
         : "=a" (ret)
         : "b" (fd), "c" (buffer), "d" (size), "a" (0x04)
     );
