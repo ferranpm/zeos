@@ -96,6 +96,8 @@ int gettime()
 /* Wrapper for the system call sys_getpid().
  * It has got the entry 20 (0x14) in the system call table
  */
+
+/* TODO:  */
 int getpid()
 {
     int ret;
