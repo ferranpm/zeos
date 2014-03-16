@@ -22,7 +22,7 @@ ENTRY (sys_call_table)
     .long sys_ni_syscall
     .long sys_ni_syscall
     .long sys_ni_syscall
-    .long sys_ni_syscall /* 20 */
+    .long sys_getpid     /* 20 */
     .long sys_ni_syscall
     .long sys_ni_syscall
     .long sys_ni_syscall
@@ -45,5 +45,5 @@ ENTRY (sys_call_table)
     .long sys_ni_syscall /* 40 */
 
 /* TODO: Figure out why these declaration is invalid */
-//MAX_SYSCALL = . - sys_call_table
+/* MAX_SYSCALL = . - sys_call_table */
 
