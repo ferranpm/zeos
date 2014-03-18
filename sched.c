@@ -56,30 +56,33 @@ void cpu_idle(void)
 	}
 }
 
-void init_freequeue() {
+void init_freequeue()
+{
     INIT_LIST_HEAD(&freequeue);
-    
+
     int i;
     for (i = 0; i < NR_TASKS; i++) {
         list_add_tail(&(task[i].task.list), &freequeue);
     }
 }
 
-void init_readyqueue() {
+void init_readyqueue()
+{
     INIT_LIST_HEAD(&readyqueue);
 }
 
-/* TODO: Debugg it futher */
-void init_idle (void) {
+/* TODO: Debugg it further */
+void init_idle (void)
+{
     struct list_head *first = list_first(&freequeue);
     idle_task = list_head_to_task_struct(first);
     list_del(first);
 
     /* Its PID always is defiend as 0 */
     idle_task->PID = 0;
-    
+
     idle_task->quantum = DEFAULT_QUANTUM;
-    
+
     /* TODO: Why is this call necessary? */
     allocate_DIR(idle_task);
 
@@ -90,15 +93,16 @@ void init_idle (void) {
     idle_task->kernel_esp = (unsigned long *)&(idle_task_stack->stack[KERNEL_STACK_SIZE-2]);
 }
 
-/* TODO: Debugg it futher */
-void init_task1(void) {
+/* TODO: Debugg it further */
+void init_task1(void)
+{
     struct list_head *first = list_first(&freequeue);
     struct task_struct *pcb_ini_task = list_head_to_task_struct(first);
     list_del(first);
-    
+
     /* Its PID always is defiend as 1 */
     pcb_ini_task->PID = 1;
-    
+
     pcb_ini_task->quantum = DEFAULT_QUANTUM;
 
     allocate_DIR(pcb_ini_task);
@@ -106,15 +110,16 @@ void init_task1(void) {
     set_cr3(get_DIR(pcb_ini_task));
 }
 
-void init_sched() {
-    
+void init_sched()
+{
     /* Initializes required structures to perform the process scheduling */
     init_freequeue();
     init_readyqueue();
 }
 
-/* TODO: Debugg it futher */
-void inner_task_switch(union task_union *t) {
+/* TODO: Debugg it further */
+void inner_task_switch(union task_union *t)
+{
     struct task_struct *curr_task_pcb = current();
     tss.esp0 = (unsigned long)&(t->stack[KERNEL_STACK_SIZE]);
 
@@ -131,11 +136,12 @@ void inner_task_switch(union task_union *t) {
     );
 }
 
-void task_switch(union task_union *t) {
-
+/* TODO: Debugg it further */
+void task_switch(union task_union *t)
+{
     /* Saves the registers esi, edi and ebx manually */
     SAVE_PARTIAL_CONTEXT
-        
+
     inner_task_switch(t);
 
     /* Restores the previously saved registers */
@@ -144,12 +150,13 @@ void task_switch(union task_union *t) {
 
 struct task_struct* current()
 {
-  int ret_value;
+    int ret_value;
 
-  __asm__ __volatile__(
-  	"movl %%esp, %0"
-	: "=g" (ret_value)
-  );
-  return (struct task_struct*)(ret_value&0xfffff000);
+    __asm__ __volatile__(
+  	    "movl %%esp, %0"
+	    : "=g" (ret_value)
+    );
+
+    return (struct task_struct*)(ret_value&0xfffff000);
 }
 

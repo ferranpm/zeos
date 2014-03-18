@@ -59,6 +59,9 @@ int strlen(char *a)
     return i;
 }
 
+/* Wrapper for the system call sys_write().
+ * It has got the entry 4 (0x04) in the system call table
+ */
 int write(int fd, char *buffer, int size)
 {
     int ret;
@@ -75,13 +78,33 @@ void perror() {
     write(1, *(sys_errlist + errno), strlen(*(sys_errlist + errno)));
 }
 
+/* Wrapper for the system call sys_gettime().
+ * It has got the entry 10 (0x0a) in the system call table
+ */
 int gettime()
 {
     int ret;
     __asm__ __volatile__(
         "int $0x80\n"
         : "=a" (ret)
-        : "a" (0x04)
+        : "a" (0x0a)
+    );
+
+    SET_ERRNO_RETURN
+}
+
+/* Wrapper for the system call sys_getpid().
+ * It has got the entry 20 (0x14) in the system call table
+ */
+
+/* TODO:  */
+int getpid()
+{
+    int ret;
+    __asm__ __volatile__(
+        "int $0x80\n"
+        : "=a" (ret)
+        : "a" (0x14)
     );
 
     SET_ERRNO_RETURN

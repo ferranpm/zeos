@@ -22,12 +22,23 @@ int __attribute__ ((__section__(".text.main")))
     /* Run a test suite provided by lab course */
     /* runjp(); */
 
+    /* Testing code for getpid() system call */
+    char char_pid;
+    pid = getpid();
+    if (pid < 0) perror();
+    else {
+        itoa(pid, &char_pid);
+        write(1, "getpid(): ", 11);
+        write(1, &char_pid, strlen(&char_pid));
+    }
+    write(1, "\n", 2);
+
     while(1) {
         /* int ret = gettime(); */
         /* if ((ret >= 0) && (ret % 500 == 0)) { */
-        /*     itoa(ret, &time); */
-        /*     write(1, &time, strlen(&time)); */
-        /*     write(1, "\n", 2); */
+            /* itoa(ret, &time); */
+            /* write(1, &time, strlen(&time)); */
+            /* write(1, "\n", 2); */
         /* } */
     }
 

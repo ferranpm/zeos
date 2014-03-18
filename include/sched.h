@@ -48,7 +48,7 @@ extern struct list_head readyqueue;
         "pushl %edi\n"       \
         "pushl %ebx\n"       \
             );
- 
+
 #define RESTORE_PARTIAL_CONTEXT \
     __asm__ __volatile__(       \
         "popl %ebx\n"           \
@@ -56,7 +56,7 @@ extern struct list_head readyqueue;
         "popl %esi\n"           \
             );
 
-/* Initializes required data for the initial process */
+/* Headers for the process management */
 struct task_struct * current();
 struct task_struct *list_head_to_task_struct(struct list_head *l);
 void init_freequeue(void);
