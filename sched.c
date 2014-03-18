@@ -121,7 +121,7 @@ void init_sched()
 void inner_task_switch(union task_union *t)
 {
     struct task_struct *curr_task_pcb = current();
-    tss.esp0 = (unsigned long)&(t->stack[KERNEL_STACK_SIZE]);
+    tss.esp0 = KERNEL_ESP(t);
 
     /* TODO: Is it necessary to check anything before sets cr3 register? */
     set_cr3(get_DIR(curr_task_pcb));
