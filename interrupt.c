@@ -94,12 +94,21 @@ void setIdt()
   set_idt_reg(&idtR);
 }
 
+#include <sched.h>
+
 void keyboard_routine()
 {
     unsigned char key = inb(0x60);
     if (key < 0x80) {
         key = char_map[key];
         if (key == '\0') key = 'C';
+
+        // TODO: Doing a task_switch from a process to the same.
+        struct task_struct *c = current();
+        if (c->PID == 0)
+            task_switch(&(task[1]));
+        else
+            task_switch(&(task[0]));
 
         /* TODO: Is this arbitrary position (10,20) valid for E1 checkpoint? */
         printc_xy(10, 20, key);
