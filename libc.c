@@ -97,7 +97,7 @@ int gettime()
  * It has got the entry 20 (0x14) in the system call table
  */
 
-/* TODO:  */
+/* TODO: Debugg it further */
 int getpid()
 {
     int ret;
@@ -108,5 +108,38 @@ int getpid()
     );
 
     SET_ERRNO_RETURN
+}
+
+/* Wrapper for the system call sys_fork().
+ * It has got the entry 2 (0x02) in the system call table
+ */
+
+/* TODO: Debugg it further */
+int fork()
+{
+    int ret;
+    __asm__ __volatile__(
+        "int $0x80\n"
+        : "=a" (ret)
+        : "a" (0x02)
+    );
+
+    SET_ERRNO_RETURN
+}
+
+/* Wrapper for the system call sys_exit().
+ * It has got the entry 1 (0x01) in the system call table
+ */
+
+/* TODO: Debugg it further */
+/* Does not return any value */
+void exit()
+{
+    int ret;
+    __asm__ __volatile__(
+        "int $0x80\n"
+        : /* No output */
+        : "a" (0x01)
+    );
 }
 
