@@ -35,8 +35,25 @@ int sys_getpid()
 int sys_fork()
 {
     int PID=-1;
+    int i;
 
-    /* creates the child process */
+    if (list_empty(&freequeue)) {
+        // ERROR
+    }
+    struct list_head *child_head = list_first(freequeue);
+    union task_union *child_union = (union task_union*)list_head_to_task_struct(child_task);
+    struct task_union *current_union = (union task_union*)current();
+
+    copy_data(current_union, child_union, ((current_union + 1) - current_union));
+
+    for (i = 0; i < NUM_PAG_DATA; i++) {
+        int dir = allocate_DIR((struct task_struct*)child_union);
+        int frame = alloc_frame();
+        if (frame == -1) {
+            // ERROR
+        }
+        set_ss_pag(get_PT(child_union), PAG_LOG_INIT_DATA_P0+i, frame);
+    }
 
     return PID;
 }
