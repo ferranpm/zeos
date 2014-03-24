@@ -23,7 +23,7 @@ struct list_head readyqueue;
 struct task_struct *idle_task;
 
 /* Values 0 and 1 are reserved for idle and initial process respectively */
-unsigned int curr_pid = 2;
+int next_free_pid = 2;
 
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t)

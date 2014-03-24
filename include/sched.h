@@ -32,7 +32,7 @@ union task_union {
 
 extern union task_union task[NR_TASKS]; /* Task array */
 extern struct task_struct *idle_task;   /* Idle process */
-extern unsigned int curr_pid;           /* Current available PID to assign to processes */
+extern int next_free_pid;               /* Next available PID to assign */
 
 /* Structures needed to implement process management */
 extern struct list_head freequeue;
