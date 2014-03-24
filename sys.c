@@ -51,8 +51,6 @@ int sys_fork()
     union task_union *parent = (union task_union *)current();
     struct task_struct *pcb_child = &(child->task); 
     struct task_struct *pcb_parent = &(parent->task); 
-    page_table_entry* pagt_child = get_PT(pcb_child);
-    page_table_entry* pagt_parent = get_PT(pcb_parent);
 
     list_del(free_pcb);
 
@@ -63,6 +61,8 @@ int sys_fork()
     /* Reserve free frames (physical memory) to allocate child's user data */
 
     allocate_DIR(pcb_child);
+    page_table_entry* pagt_child = get_PT(pcb_child);
+    page_table_entry* pagt_parent = get_PT(pcb_parent);
 
     /* Array of free frames that will be reserved for child's user data allocation */
     int resv_frames[NUM_PAG_DATA];

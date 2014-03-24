@@ -33,6 +33,13 @@ int __attribute__ ((__section__(".text.main")))
     }
     write(1, "\n", 2);
 
+    /* Testing code for system call fork() */
+    /* TODO: Figures out another better way to tests it */
+    pid = fork();
+    if (pid < 0) perror();
+    else if (pid == 0) write(1, "FILL\n", 6);
+    else write(1, "PARE\n", 6);
+
     while(1) {
         /* int ret = gettime(); */
         /* if ((ret >= 0) && (ret % 500 == 0)) { */
