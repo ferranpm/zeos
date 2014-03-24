@@ -15,7 +15,7 @@
 
 extern unsigned int zeos_ticks;
 
-unsinged int new_pid()
+int new_pid()
 {
     return next_free_pid++;
 }
@@ -106,12 +106,19 @@ int sys_fork()
     pcb_child->quantum = DEFAULT_QUANTUM;
 
     /* TODO: Prepare child's kernel stack to perform context switch */
-    unsigned int ebp;
+    /* unsigned int ebp;
 
     __asm__ __volatile__(
         "movl %%ebp, %0\n"
         : "=g" (ebp)
-    );
+    );*/
+
+    /* Stores 0 into kernel stack position of eax in order to allow the child 
+     * process to return 0. eax is at tenth position from the base of kernel
+     * (see documentation provided by entry.S file to know the kernel stack
+     * status when switches to privilege level 0
+     */
+    pcb_child->stack[KERNEL_STACK_SIZE-10] = 0;
 
     /* Adds child process to ready queue and returns its PID from parent */
     list_add_tail(&(child_pcb->list), &readyqueue);
