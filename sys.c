@@ -89,11 +89,12 @@ int sys_fork()
         set_ss_pag(pagt_child, PAG_LOG_INIT_DATA_P0+i, resv_frames[i]);
     }
 
-    /* Inherit user data */
+    /* Inherits user data */
+    unsigned int stride = PAGE_SIZE * NUM_PAG_DATA;
     for (i = 0; i < NUM_PAG_DATA; i++) {
         unsigned int logic_addr = (i + PAG_LOG_INIT_DATA_P0) * PAGE_SIZE;
         set_ss_pag(pagt_parent, i + PAG_LOG_INIT_DATA_P0 + NUM_PAG_DATA, resv_frames[i]);
-        copy_data((void *)(logic_addr), (void *)(logic_addr + PAGE_SIZE * NUM_PAG_DATA), PAGE_SIZE);
+        copy_data((void *)(logic_addr), (void *)(logic_addr + stride), PAGE_SIZE);
         del_ss_pag(pagt_parent, i + PAG_LOG_INIT_DATA_P0 + NUM_PAG_DATA);
     }
 
@@ -105,15 +106,6 @@ int sys_fork()
     PID = new_pid();
     pcb_child->PID = PID;
     pcb_child->quantum = DEFAULT_QUANTUM;
-
-    /* TODO: Prepare child's kernel stack to perform context switch */
-    /*unsigned int ebp;
-    __asm__ __volatile__(
-        "movl %%ebp, %0\n"
-        : "=g" (ebp)
-    ); 
-    
-    child->stack[KERNEL_STACK_SIZE - 18] = ebp;*/
 
     /* Stores 0 into kernel stack position of eax in order to allow the child 
      * process to return 0. eax is at tenth position from the base of kernel
