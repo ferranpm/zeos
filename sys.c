@@ -93,12 +93,13 @@ int sys_fork()
     for (i = 0; i < NUM_PAG_DATA; i++) {
         unsigned int logic_addr = (i + PAG_LOG_INIT_DATA_P0) * PAGE_SIZE;
         set_ss_pag(pagt_parent, i + PAG_LOG_INIT_DATA_P0 + NUM_PAG_DATA, resv_frames[i]);
-        copy_data((void *)logic_addr, (void *)(logic_addr + PAGE_SIZE * NUM_PAG_DATA), PAGE_SIZE);
+        copy_data((void *)(logic_addr), (void *)(logic_addr + PAGE_SIZE * NUM_PAG_DATA), PAGE_SIZE);
         del_ss_pag(pagt_parent, i + PAG_LOG_INIT_DATA_P0 + NUM_PAG_DATA);
     }
 
     /* Flushes entire TLB */
-    set_cr3(0);
+    /* TODO: Why is necessary to write this value on cr3 (get_DIR(pcb_parent)) instead of 0? */
+    set_cr3(get_DIR(pcb_parent));
 
     /* Updates child's PCB */
     PID = new_pid();
@@ -106,12 +107,13 @@ int sys_fork()
     pcb_child->quantum = DEFAULT_QUANTUM;
 
     /* TODO: Prepare child's kernel stack to perform context switch */
-    /* unsigned int ebp;
-
+    /*unsigned int ebp;
     __asm__ __volatile__(
         "movl %%ebp, %0\n"
         : "=g" (ebp)
-    );*/
+    ); 
+    
+    child->stack[KERNEL_STACK_SIZE - 18] = ebp;*/
 
     /* Stores 0 into kernel stack position of eax in order to allow the child 
      * process to return 0. eax is at tenth position from the base of kernel
