@@ -37,6 +37,11 @@ int sys_getpid()
     return current()->PID;
 }
 
+int ret_from_fork() {
+    printk("RET FROM FORK\n");
+    return 0;
+}
+
 int sys_fork()
 {
     int PID=-1;
@@ -44,13 +49,13 @@ int sys_fork()
 
     /* Return error if there isn't any available task in the free queue */
     if (list_empty(&freequeue)) return -EAGAIN;
-    
+
     /* Needed variables related to child and father processes */
     struct list_head *free_pcb = list_first(&freequeue);
     union task_union *child = (union task_union*)list_head_to_task_struct(free_pcb);
     union task_union *parent = (union task_union *)current();
-    struct task_struct *pcb_child = &(child->task); 
-    struct task_struct *pcb_parent = &(parent->task); 
+    struct task_struct *pcb_child = &(child->task);
+    struct task_struct *pcb_parent = &(parent->task);
 
     list_del(free_pcb);
 
@@ -68,7 +73,7 @@ int sys_fork()
     int resv_frames[NUM_PAG_DATA];
 
     for (i = 0; i < NUM_PAG_DATA; i++) {
-        
+
         /* If there is no enough free frames, those reserved thus far must be freed */
         if ((resv_frames[i] = alloc_frame()) == -1) {
             while (i >= 0) free_frame(resv_frames[i--]);
@@ -83,7 +88,7 @@ int sys_fork()
     for (i = PAG_LOG_INIT_CODE_P0; i < PAG_LOG_INIT_DATA_P0; i++) {
        set_ss_pag(pagt_child, i, get_frame(pagt_parent, i));
     }
-    
+
     /* Associates logical pages from child to physical reserved frame */
     for (i = 0; i < NUM_PAG_DATA; i++) {
         set_ss_pag(pagt_child, PAG_LOG_INIT_DATA_P0+i, resv_frames[i]);
@@ -107,15 +112,25 @@ int sys_fork()
     pcb_child->PID = PID;
     pcb_child->quantum = DEFAULT_QUANTUM;
 
-    /* Stores 0 into kernel stack position of eax in order to allow the child 
+    /* Stores 0 into kernel stack position of eax in order to allow the child
      * process to return 0. eax is at tenth position from the base of kernel
      * (see documentation provided by entry.S file to know the kernel stack
      * status when switches to privilege level 0
      */
-    child->stack[KERNEL_STACK_SIZE - 10] = 0;
+    unsigned int ebp;
+    __asm__ __volatile__ (
+            "movl %%ebp, %0"
+            : /* no output */
+            : "g" (ebp)
+            );
+    unsigned int stack_stride = (ebp - (unsigned int)parent)/sizeof(int);
+    child->stack[stack_stride+2] = 0;
+    child->stack[stack_stride+1] = (unsigned long)&ret_from_fork;
 
     /* Adds child process to ready queue and returns its PID from parent */
     list_add_tail(&(pcb_child->list), &readyqueue);
+
+    task_switch(child);
     return PID;
 }
 
