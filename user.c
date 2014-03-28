@@ -39,13 +39,12 @@ int __attribute__ ((__section__(".text.main")))
     if (pid < 0) {
         perror();
     }
-    else if (pid == 0) {
-        while (1)
-            write(1, "FILL\n", 6);
-    }
-    else {
-        while (1)
-            write(1, "PARE\n", 6);
+    while (1) {
+        pid = getpid();
+        itoa(pid, &char_pid);
+        write(1, "getpid(): ", 11);
+        write(1, &char_pid, strlen(&char_pid));
+        write(1, "\n", 2);
     }
 
     return 0;

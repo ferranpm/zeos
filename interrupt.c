@@ -105,10 +105,14 @@ void keyboard_routine()
 
         // TODO: Doing a task_switch from a process to the same.
         struct task_struct *c = current();
-        //if (c->PID == 0) task_switch(&(task[1]));
-        //else if (c->PID == 1) task_switch(&(task[2]));
-        //else task_switch(&(task[0]));
-        //task_switch(&(task[2]));
+        if (c->PID == 1) {
+            printk("anem al fill\n");
+            task_switch(&(task[2]));
+        }
+        else {
+            printk("anem al pare\n");
+            task_switch(&(task[1]));
+        }
 
         /* TODO: Is this arbitrary position (10,20) valid for E1 checkpoint? */
         printc_xy(10, 20, key);
