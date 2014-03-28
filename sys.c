@@ -118,14 +118,16 @@ int sys_fork()
      * status when switches to privilege level 0
      */
     unsigned int ebp;
-    __asm__ __volatile__ (
-            "movl %%ebp, %0"
-            : /* no output */
-            : "g" (ebp)
+    __asm__ __volatile__(
+            "mov %%ebp,%0\n\t"
+            :"=g"(ebp)
+            :
             );
-    unsigned int stack_stride = (ebp - (unsigned int)parent)/sizeof(int);
-    child->stack[stack_stride+2] = 0;
-    child->stack[stack_stride+1] = (unsigned long)&ret_from_fork;
+
+    unsigned int stack_stride = (ebp - (unsigned int)parent)/sizeof(unsigned long);
+    child->stack[stack_stride-1] = (unsigned long)&ret_from_fork;
+    child->stack[stack_stride-2] = 0;
+    child->task.kernel_esp = &child->stack[stack_stride-2];
 
     /* Adds child process to ready queue and returns its PID from parent */
     list_add_tail(&(pcb_child->list), &readyqueue);
