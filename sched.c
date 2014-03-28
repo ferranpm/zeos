@@ -129,8 +129,6 @@ void inner_task_switch(union task_union *t)
 
     __asm__ __volatile__(
         "mov %%ebp,%0\n"
-        "mov %1,%%esp\n"
-        "pop %%ebp\n"
         "ret\n"
         : /* no output */
         : "r" (curr_task_pcb->kernel_esp), "r" (t->task.kernel_esp)
