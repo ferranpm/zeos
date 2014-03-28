@@ -122,17 +122,21 @@ void init_sched()
 void inner_task_switch(union task_union *t)
 {
     struct task_struct *curr_task_pcb = current();
+
     tss.esp0 = KERNEL_ESP(t);
 
     /* TODO: Is it necessary to check anything before sets cr3 register? */
-    set_cr3(get_DIR(curr_task_pcb));
+    /* set_cr3(get_DIR(curr_task_pcb)); */
+    set_cr3(get_DIR(t));
 
-    __asm__ __volatile__(
-        "mov %%ebp,%0\n"
-        "ret\n"
-        : /* no output */
-        : "r" (curr_task_pcb->kernel_esp), "r" (t->task.kernel_esp)
-    );
+    __asm__ __volatile__ (
+            "mov %%ebp,%0\n"
+            "movl %1, %%esp\n"
+            "popl %%ebp\n"
+            "ret\n"
+            : "=g" (curr_task_pcb->kernel_esp)
+            :"r" (t->task.kernel_esp)
+            );
 }
 
 /* TODO: Debugg it further */
