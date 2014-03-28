@@ -36,17 +36,16 @@ int __attribute__ ((__section__(".text.main")))
     /* Testing code for system call fork() */
     /* TODO: Figures out another better way to tests it */
     pid = fork();
-    if (pid < 0) perror();
-    else if (pid == 0) write(1, "FILL\n", 6);
-    else write(1, "PARE\n", 6);
-
-    while(1) {
-        /* int ret = gettime(); */
-        /* if ((ret >= 0) && (ret % 500 == 0)) { */
-            /* itoa(ret, &time); */
-            /* write(1, &time, strlen(&time)); */
-            /* write(1, "\n", 2); */
-        /* } */
+    if (pid < 0) {
+        perror();
+    }
+    else if (pid == 0) {
+        while (1)
+            write(1, "FILL\n", 6);
+    }
+    else {
+        while (1)
+            write(1, "PARE\n", 6);
     }
 
     return 0;
