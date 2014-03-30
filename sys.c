@@ -38,7 +38,6 @@ int sys_getpid()
 }
 
 int ret_from_fork() {
-    printk("RET FROM FORK\n");
     return 0;
 }
 
@@ -111,7 +110,7 @@ int sys_fork()
     pcb_child->PID = PID;
 
     /* TODO: Does the child inherit the same quantum as its parent? */
-    set_quantum(pcb_child, DEFAULT_QUANTUM);
+    /* set_quantum(pcb_child, DEFAULT_QUANTUM); */
 
     /* TODO: Write documentation for returning child's approach */
     unsigned int ebp;
@@ -128,7 +127,6 @@ int sys_fork()
     /* Adds child process to ready queue and returns its PID from parent */
     list_add_tail(&(pcb_child->list), &readyqueue);
 
-    /* task_switch(child); */
     return PID;
 }
 
