@@ -13,7 +13,7 @@
 #define KERNEL_STACK_SIZE 1024
 
 /* TODO: Sets properly the default value for quantum (process scheduling) */
-#define DEFAULT_QUANTUM 10
+#define DEFAULT_QUANTUM 50
 
 enum state_t { ST_RUN, ST_READY, ST_BLOCKED, ST_ZOMBIE };
 

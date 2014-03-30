@@ -95,6 +95,7 @@ void init_idle (void)
     idle_task->PID = 0;
 
     set_quantum(idle_task, DEFAULT_QUANTUM);
+    idle_task->state = ST_READY;
 
     /* TODO: Why is this call necessary? */
     allocate_DIR(idle_task);
@@ -115,12 +116,18 @@ void init_task1(void)
 
     /* Its PID always is defiend as 1 */
     pcb_ini_task->PID = 1;
-
+    
     set_quantum(pcb_ini_task, DEFAULT_QUANTUM);
+    pcb_ini_task->state = ST_READY;
 
     allocate_DIR(pcb_ini_task);
     set_user_pages(pcb_ini_task);
     set_cr3(get_DIR(pcb_ini_task));
+
+    /* Must be added at readyqueue since this will become the first process
+     * to be executed by the CPU
+     */
+    list_add_tail(&(pcb_ini_task->list), &readyqueue);
 }
 
 void init_sched()
@@ -136,13 +143,12 @@ void init_sched()
 void inner_task_switch(union task_union *t)
 {
     struct task_struct *curr_task_pcb = current();
-    page_table_entry *pagt = get_DIR(t);
 
     tss.esp0 = KERNEL_ESP(t);
 
     /* TODO: Is it necessary to check anything before sets cr3 register? */
     /* set_cr3(get_DIR(curr_task_pcb)); */
-    set_cr3(pagt);
+    set_cr3(get_DIR(t));
 
     __asm__ __volatile__ (
         "mov %%ebp,%0\n"
@@ -157,11 +163,6 @@ void inner_task_switch(union task_union *t)
 /* TODO: Debugg it further */
 void task_switch(union task_union *t)
 {
-    if (current()->PID == 0) printk("SOC PROCES IDLE\n");
-    else if (current()->PID == 1) printk("SOC PROCES PARE\n");
-    else if (current()->PID == 2) printk("SOC PROCES FILL\n");
-    else printk("NO SE QUI SOC\n");
-    
     /* Saves the registers esi, edi and ebx manually */
     SAVE_PARTIAL_CONTEXT
 
@@ -169,10 +170,6 @@ void task_switch(union task_union *t)
 
     /* Restores the previously saved registers */
     RESTORE_PARTIAL_CONTEXT
-    if (current()->PID == 0) printk("SOC PROCES IDLE\n\n");
-    else if (current()->PID == 1) printk("SOC PROCES PARE\n\n");
-    else if (current()->PID == 2) printk("SOC PROCES FILL\n\n");
-    else printk("NO SE QUI SOC\n\n");
 }
 
 struct task_struct* current()
@@ -209,8 +206,8 @@ void update_current_state_rr(struct list_head *dst_queue)
      * (only if the current process is not the idle process)
      */
     if (curr_task != idle_task) {
-        list_add_tail(&(curr_task->list), dst_queue);
         list_del(&(curr_task->list));
+        list_add_tail(&(curr_task->list), dst_queue);
     }
 }
 
@@ -230,5 +227,9 @@ void sched_next_rr()
     curr_quantum = get_quantum(pcb_next_task);
 
     /* Performs a task switch only if the next process is not the current */
-    if (pcb_next_task != current()) task_switch((union task_union *)pcb_next_task);
+    if (pcb_next_task != current()) {
+        if (pcb_next_task-> PID == 1 && current()->PID == 2) printk("actual->PID = 2 || task_switch(task-PID == 1)\n");
+        if (pcb_next_task-> PID == 2 && current()->PID == 1) printk("actual->PID = 1 || task_switch(task-PID == 2)\n");
+        task_switch((union task_union *)pcb_next_task);
+    }
 }

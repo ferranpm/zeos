@@ -44,14 +44,14 @@ int __attribute__ ((__section__(".text.main")))
     else if (pid == 0) write(1, child, strlen(child));
     else write(1, parent, strlen(parent));
     while (1) {
-        //pid = getpid();
-        //if (pid < 0) perror();
-        //itoa(pid, &char_pid);
-        //write(1, "getpid(): ", 11);
-        //write(1, &char_pid, strlen(&char_pid));
-        //if (pid == 1) write(1, parent, strlen(parent));
-        //else if (pid == 2) write(1, child, strlen(child));
-        //write(1, "\n", 2);
+        pid = getpid();
+        if (pid < 0) perror();
+        itoa(pid, &char_pid);
+        write(1, "getpid(): ", 11);
+        write(1, &char_pid, strlen(&char_pid));
+        if (pid == 1) write(1, parent, strlen(parent));
+        else if (pid == 2) write(1, child, strlen(child));
+        write(1, "\n", 2);
     }
 
     return 0;
