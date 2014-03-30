@@ -30,8 +30,6 @@ char char_map[] =
   '\0','\0'
 };
 
-//extern unsigned int zeos_ticks;
-
 void setInterruptHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
 {
   /***********************************************************************/
@@ -103,7 +101,6 @@ void keyboard_routine()
         key = char_map[key];
         if (key == '\0') key = 'C';
 
-        // TODO: Doing a task_switch from a process to the same.
         struct task_struct *c = current();
         if (c->PID == 1) {
             printk("anem al fill\n");
@@ -121,9 +118,12 @@ void keyboard_routine()
 
 void clock_routine()
 {
+    /* zeos_show_clock() */
     ++zeos_ticks;
-
-    /* TODO: Is this call needed for E1 checkpoint? */
-    zeos_show_clock();
+    update_sched_data_rr();
+    if (needs_sched_rr()) {
+        update_current_state_rr(&readyqueue);
+        sched_next_rr();
+    }
 }
 
