@@ -25,6 +25,18 @@ struct task_struct *idle_task;
 /* Values 0 and 1 are reserved for idle and initial process respectively */
 int next_free_pid = 2;
 
+int curr_quantum = 0;
+
+int get_quantum(struct task_struct *t)
+{
+    return t->quantum;
+}
+
+void set_quantum(struct task_struct *t, int new_quantum)
+{
+    t->quantum = new_quantum;
+}
+
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t)
 {
@@ -82,7 +94,7 @@ void init_idle (void)
     /* Its PID always is defiend as 0 */
     idle_task->PID = 0;
 
-    idle_task->quantum = DEFAULT_QUANTUM;
+    set_quantum(idle_task, DEFAULT_QUANTUM);
 
     /* TODO: Why is this call necessary? */
     allocate_DIR(idle_task);
@@ -104,7 +116,7 @@ void init_task1(void)
     /* Its PID always is defiend as 1 */
     pcb_ini_task->PID = 1;
 
-    pcb_ini_task->quantum = DEFAULT_QUANTUM;
+    set_quantum(pcb_ini_task, DEFAULT_QUANTUM);
 
     allocate_DIR(pcb_ini_task);
     set_user_pages(pcb_ini_task);
@@ -116,32 +128,40 @@ void init_sched()
     /* Initializes required structures to perform the process scheduling */
     init_freequeue();
     init_readyqueue();
+
+    curr_quantum = DEFAULT_QUANTUM;
 }
 
 /* TODO: Debugg it further */
 void inner_task_switch(union task_union *t)
 {
     struct task_struct *curr_task_pcb = current();
+    page_table_entry *pagt = get_DIR(t);
 
     tss.esp0 = KERNEL_ESP(t);
 
     /* TODO: Is it necessary to check anything before sets cr3 register? */
     /* set_cr3(get_DIR(curr_task_pcb)); */
-    set_cr3(get_DIR(t));
+    set_cr3(pagt);
 
     __asm__ __volatile__ (
-            "mov %%ebp,%0\n"
-            "movl %1, %%esp\n"
-            "popl %%ebp\n"
-            "ret\n"
-            : "=g" (curr_task_pcb->kernel_esp)
-            :"r" (t->task.kernel_esp)
-            );
+        "mov %%ebp,%0\n"
+        "movl %1, %%esp\n"
+        "popl %%ebp\n"
+        "ret\n"
+        : "=g" (curr_task_pcb->kernel_esp)
+        :"r" (t->task.kernel_esp)
+    );
 }
 
 /* TODO: Debugg it further */
 void task_switch(union task_union *t)
 {
+    if (current()->PID == 0) printk("SOC PROCES IDLE\n");
+    else if (current()->PID == 1) printk("SOC PROCES PARE\n");
+    else if (current()->PID == 2) printk("SOC PROCES FILL\n");
+    else printk("NO SE QUI SOC\n");
+    
     /* Saves the registers esi, edi and ebx manually */
     SAVE_PARTIAL_CONTEXT
 
@@ -149,6 +169,10 @@ void task_switch(union task_union *t)
 
     /* Restores the previously saved registers */
     RESTORE_PARTIAL_CONTEXT
+    if (current()->PID == 0) printk("SOC PROCES IDLE\n\n");
+    else if (current()->PID == 1) printk("SOC PROCES PARE\n\n");
+    else if (current()->PID == 2) printk("SOC PROCES FILL\n\n");
+    else printk("NO SE QUI SOC\n\n");
 }
 
 struct task_struct* current()
@@ -163,3 +187,48 @@ struct task_struct* current()
     return (struct task_struct*)(ret_value&0xfffff000);
 }
 
+void update_sched_data_rr()
+{
+    --curr_quantum;
+}
+
+int needs_sched_rr()
+{
+    return (curr_quantum == 0);
+}
+
+void update_current_state_rr(struct list_head *dst_queue)
+{
+    /* Updates the state of current process */
+    struct task_struct *curr_task = current();
+    if (dst_queue == &freequeue) curr_task->state = ST_ZOMBIE;
+    else if (dst_queue == &readyqueue) curr_task->state = ST_READY;
+    else curr_task->state = ST_BLOCKED;
+
+    /* Removes current process from its current queue and put it to dst_queue
+     * (only if the current process is not the idle process)
+     */
+    if (curr_task != idle_task) {
+        list_add_tail(&(curr_task->list), dst_queue);
+        list_del(&(curr_task->list));
+    }
+}
+
+void sched_next_rr()
+{
+    struct task_struct *pcb_next_task;
+    
+    /* If there is not any process in the readyqueue, executes idle process */
+    if (list_empty(&readyqueue)) pcb_next_task = idle_task;
+    else {
+        struct list_head *list_next_task = list_first(&readyqueue);
+        pcb_next_task = list_head_to_task_struct(list_next_task);
+        pcb_next_task->state = ST_RUN;
+    }
+
+    /* Restores system quantum to the current quantum of the next process */
+    curr_quantum = get_quantum(pcb_next_task);
+
+    /* Performs a task switch only if the next process is not the current */
+    if (pcb_next_task != current()) task_switch((union task_union *)pcb_next_task);
+}

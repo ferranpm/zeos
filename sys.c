@@ -44,10 +44,10 @@ int ret_from_fork() {
 
 int sys_fork()
 {
-    int PID=-1;
+    int PID = -1;
     unsigned int i;
 
-    /* Return error if there isn't any available task in the free queue */
+    /* Returns error if there isn't any available task in the free queue */
     if (list_empty(&freequeue)) return -EAGAIN;
 
     /* Needed variables related to child and father processes */
@@ -104,25 +104,21 @@ int sys_fork()
     }
 
     /* Flushes entire TLB */
-    /* TODO: Why is necessary to write this value on cr3 (get_DIR(pcb_parent)) instead of 0? */
     set_cr3(get_DIR(pcb_parent));
 
     /* Updates child's PCB */
     PID = new_pid();
     pcb_child->PID = PID;
-    pcb_child->quantum = DEFAULT_QUANTUM;
 
-    /* Stores 0 into kernel stack position of eax in order to allow the child
-     * process to return 0. eax is at tenth position from the base of kernel
-     * (see documentation provided by entry.S file to know the kernel stack
-     * status when switches to privilege level 0
-     */
+    /* TODO: Does the child inherit the same quantum as its parent? */
+    set_quantum(pcb_child, DEFAULT_QUANTUM);
+
+    /* TODO: Write documentation for returning child's approach */
     unsigned int ebp;
     __asm__ __volatile__(
-            "mov %%ebp,%0\n\t"
-            :"=g"(ebp)
-            :
-            );
+        "mov %%ebp,%0\n"
+        :"=g"(ebp)
+    );
 
     unsigned int stack_stride = (ebp - (unsigned int)parent)/sizeof(unsigned long);
     child->stack[stack_stride] = (unsigned long)&ret_from_fork;

@@ -13,15 +13,16 @@
 #define KERNEL_STACK_SIZE 1024
 
 /* TODO: Sets properly the default value for quantum (process scheduling) */
-#define DEFAULT_QUANTUM 5
+#define DEFAULT_QUANTUM 10
 
-enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
+enum state_t { ST_RUN, ST_READY, ST_BLOCKED, ST_ZOMBIE };
 
 struct task_struct {
     int PID;                               /* Process ID */
     page_table_entry * dir_pages_baseAddr; /* Directory base address */
-    unsigned int quantum;
+    int quantum;
     unsigned long *kernel_esp;
+    enum state_t state;
     struct list_head list;
 };
 
@@ -47,14 +48,14 @@ extern struct list_head readyqueue;
         "pushl %esi\n"       \
         "pushl %edi\n"       \
         "pushl %ebx\n"       \
-            );
+    );
 
 #define RESTORE_PARTIAL_CONTEXT \
     __asm__ __volatile__(       \
         "popl %ebx\n"           \
         "popl %edi\n"           \
         "popl %esi\n"           \
-            );
+    );
 
 /* Headers for the process management */
 struct task_struct * current();
@@ -70,8 +71,10 @@ page_table_entry * get_PT (struct task_struct *t) ;
 page_table_entry * get_DIR (struct task_struct *t) ;
 
 /* Headers for the scheduling policy */
+int get_quantum(struct task_struct *t);
+void set_quantum(struct task_struct *t, int new_quantum);
 void sched_next_rr();
-void update_current_state_rr(struct list_head *dest);
+void update_current_state_rr(struct list_head *dst_queue);
 int needs_sched_rr();
 void update_sched_data_rr();
 

@@ -36,15 +36,22 @@ int __attribute__ ((__section__(".text.main")))
     /* Testing code for system call fork() */
     /* TODO: Figures out another better way to tests it */
     pid = fork();
+    char *parent = " SOC EL PARE\n";
+    char *child = " SOC EL FILL\n";
     if (pid < 0) {
         perror();
     }
+    else if (pid == 0) write(1, child, strlen(child));
+    else write(1, parent, strlen(parent));
     while (1) {
-        pid = getpid();
-        itoa(pid, &char_pid);
-        write(1, "getpid(): ", 11);
-        write(1, &char_pid, strlen(&char_pid));
-        write(1, "\n", 2);
+        //pid = getpid();
+        //if (pid < 0) perror();
+        //itoa(pid, &char_pid);
+        //write(1, "getpid(): ", 11);
+        //write(1, &char_pid, strlen(&char_pid));
+        //if (pid == 1) write(1, parent, strlen(parent));
+        //else if (pid == 2) write(1, child, strlen(child));
+        //write(1, "\n", 2);
     }
 
     return 0;
