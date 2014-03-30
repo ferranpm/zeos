@@ -96,6 +96,7 @@ void init_idle (void)
 
     set_quantum(idle_task, DEFAULT_QUANTUM);
     idle_task->state = ST_READY;
+    init_stats(idle_task);
 
     /* TODO: Why is this call necessary? */
     allocate_DIR(idle_task);
@@ -111,23 +112,24 @@ void init_idle (void)
 void init_task1(void)
 {
     struct list_head *first = list_first(&freequeue);
-    struct task_struct *pcb_ini_task = list_head_to_task_struct(first);
+    struct task_struct *pcb_init_task = list_head_to_task_struct(first);
     list_del(first);
 
     /* Its PID always is defiend as 1 */
-    pcb_ini_task->PID = 1;
+    pcb_init_task->PID = 1;
     
-    set_quantum(pcb_ini_task, DEFAULT_QUANTUM);
-    pcb_ini_task->state = ST_READY;
+    set_quantum(pcb_init_task, DEFAULT_QUANTUM);
+    pcb_init_task->state = ST_READY;
+    init_stats(pcb_init_task);
 
-    allocate_DIR(pcb_ini_task);
-    set_user_pages(pcb_ini_task);
-    set_cr3(get_DIR(pcb_ini_task));
+    allocate_DIR(pcb_init_task);
+    set_user_pages(pcb_init_task);
+    set_cr3(get_DIR(pcb_init_task));
 
     /* Must be added at readyqueue since this will become the first process
      * to be executed by the CPU
      */
-    list_add_tail(&(pcb_ini_task->list), &readyqueue);
+    list_add_tail(&(pcb_init_task->list), &readyqueue);
 }
 
 void init_sched()
@@ -228,8 +230,66 @@ void sched_next_rr()
 
     /* Performs a task switch only if the next process is not the current */
     if (pcb_next_task != current()) {
-        if (pcb_next_task-> PID == 1 && current()->PID == 2) printk("actual->PID = 2 || task_switch(task-PID == 1)\n");
-        if (pcb_next_task-> PID == 2 && current()->PID == 1) printk("actual->PID = 1 || task_switch(task-PID == 2)\n");
+        update_stats(current(), RSYS_TO_READY);
+        update_stats(pcb_next_task, READY_TO_RSYS);
         task_switch((union task_union *)pcb_next_task);
     }
 }
+
+void init_stats(struct task_struct *pcb)
+{
+    pcb->statistics.user_ticks = 0;
+    pcb->statistics.system_ticks = 0;
+    pcb->statistics.blocked_ticks = 0;
+    pcb->statistics.ready_ticks = 0;
+    pcb->statistics.elapsed_total_ticks = 0;
+    pcb->statistics.total_trans = 0;
+    pcb->statistics.remaining_ticks = 0;
+}
+
+void update_stats(struct task_struct *pcb, enum transition_t trans)
+{
+    switch (trans) {
+    case RUSER_TO_RSYS :
+        update_stats_ruser_to_rsys(pcb);
+        break;
+
+    case RSYS_TO_RUSER :
+        update_stats_rsys_to_ruser(pcb);
+        break;
+
+    case RSYS_TO_READY :
+        update_stats_rsys_to_ready(pcb);
+        break;
+
+    case READY_TO_RSYS :
+        update_stats_ready_to_rsys(pcb);
+        break;
+    }
+}
+
+void update_stats_ruser_to_rsys(struct task_struct *pcb)
+{
+    pcb->statistics.user_ticks += (get_ticks() - pcb->statistics.elapsed_total_ticks);
+    pcb->statistics.elapsed_total_ticks = get_ticks();
+}
+
+void update_stats_rsys_to_ruser(struct task_struct *pcb)
+{
+    pcb->statistics.system_ticks += (get_ticks() - pcb->statistics.elapsed_total_ticks);
+    pcb->statistics.elapsed_total_ticks = get_ticks();
+}
+
+void update_stats_rsys_to_ready(struct task_struct *pcb)
+{
+    pcb->statistics.system_ticks += (get_ticks() - pcb->statistics.elapsed_total_ticks);
+    pcb->statistics.elapsed_total_ticks = get_ticks();
+}
+
+void update_stats_ready_to_rsys(struct task_struct *pcb)
+{
+    pcb->statistics.ready_ticks += (get_ticks() - pcb->statistics.elapsed_total_ticks);
+    pcb->statistics.elapsed_total_ticks = get_ticks();
+    ++pcb->statistics.total_trans;
+}
+
