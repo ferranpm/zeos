@@ -129,7 +129,7 @@ int sys_fork()
     unsigned int stack_stride = (ebp - (unsigned int)parent)/sizeof(unsigned long);
     child->stack[stack_stride] = (unsigned long)&ret_from_fork;
     child->stack[stack_stride-1] = (unsigned long)&ret_from_fork;
-    child->task.kernel_esp = &child->stack[stack_stride-2];
+    child->task.kernel_esp = &child->stack[stack_stride-1];
 
     /* Adds child process to ready queue and returns its PID from parent */
     list_add_tail(&(pcb_child->list), &readyqueue);
