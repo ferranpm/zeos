@@ -125,6 +125,10 @@ void init_task1(void)
 
     allocate_DIR(pcb_init_task);
     set_user_pages(pcb_init_task);
+
+    // TODO: Is this necessary?? (point 4 of init_task1)
+    tss.esp0 = KERNEL_ESP((union task_union*)pcb_init_task);
+
     set_cr3(get_DIR(pcb_init_task));
 
     /* Must be added at readyqueue since this will become the first process
