@@ -8,6 +8,7 @@
 #include <list.h>
 #include <types.h>
 #include <mm_address.h>
+#include <stats.h>
 
 #define NR_TASKS 10
 #define KERNEL_STACK_SIZE 1024
@@ -16,6 +17,7 @@
 #define DEFAULT_QUANTUM 50
 
 enum state_t { ST_RUN, ST_READY, ST_BLOCKED, ST_ZOMBIE };
+enum transition_t { RUSER_TO_RSYS, RSYS_TO_RUSER, RSYS_TO_READY, READY_TO_RSYS };
 
 struct task_struct {
     int PID;                               /* Process ID */
@@ -23,6 +25,7 @@ struct task_struct {
     int quantum;
     unsigned long *kernel_esp;
     enum state_t state;
+    struct stats statistics;
     struct list_head list;
 };
 
@@ -77,6 +80,14 @@ void sched_next_rr();
 void update_current_state_rr(struct list_head *dst_queue);
 int needs_sched_rr();
 void update_sched_data_rr();
+
+/* Headers for the process statistics */
+void init_stats(struct task_struct *pcb);
+void update_stats(struct task_struct *pcb, enum transition_t trans);
+void update_stats_ruser_to_rsys(struct task_struct *pcb);
+void update_stats_rsys_to_ruser(struct task_struct *pcb);
+void update_stats_rsys_to_ready(struct task_struct *pcb);
+void update_stats_ready_to_rsys(struct task_struct *pcb);
 
 #endif  /* __SCHED_H__ */
 

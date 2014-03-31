@@ -19,11 +19,8 @@ int __attribute__ ((__section__(".text.main")))
     /* Testing code for gettime() system call */
     /* char time; */
 
-    /* Run a test suite provided by lab course */
-    /* runjp(); */
-
     /* Testing code for getpid() system call */
-    char char_pid;
+    /*char char_pid;
     pid = getpid();
     if (pid < 0) perror();
     else {
@@ -31,27 +28,31 @@ int __attribute__ ((__section__(".text.main")))
         write(1, "getpid(): ", 11);
         write(1, &char_pid, strlen(&char_pid));
     }
-    write(1, "\n", 2);
+    write(1, "\n", 2);*/
 
     /* Testing code for system call fork() */
     /* TODO: Figures out another better way to tests it */
-    pid = fork();
+    /*pid = fork();
     char *parent = " SOC EL PARE\n";
     char *child = " SOC EL FILL\n";
     if (pid < 0) {
         perror();
     }
     else if (pid == 0) write(1, child, strlen(child));
-    else write(1, parent, strlen(parent));
+    else write(1, parent, strlen(parent));*/
+
+    /* Run a test suite provided by lab course */
+    runjp();
+
     while (1) {
-        pid = getpid();
+        /*pid = getpid();
         if (pid < 0) perror();
         itoa(pid, &char_pid);
         write(1, "getpid(): ", 11);
         write(1, &char_pid, strlen(&char_pid));
         if (pid == 1) write(1, parent, strlen(parent));
         else if (pid == 2) write(1, child, strlen(child));
-        write(1, "\n", 2);
+        write(1, "\n", 2);*/
     }
 
     return 0;

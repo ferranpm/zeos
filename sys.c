@@ -29,11 +29,15 @@ int check_fd(int fd, int permissions)
 
 int sys_ni_syscall()
 {
+    update_stats(current(), RUSER_TO_RSYS);
+    update_stats(current(), RSYS_TO_RUSER);
     return -ENOSYS;
 }
 
 int sys_getpid()
 {
+    update_stats(current(), RUSER_TO_RSYS);
+    update_stats(current(), RSYS_TO_RUSER);
     return current()->PID;
 }
 
@@ -43,6 +47,8 @@ int ret_from_fork() {
 
 int sys_fork()
 {
+    update_stats(current(), RUSER_TO_RSYS);
+    
     int PID = -1;
     unsigned int i;
 
@@ -76,6 +82,7 @@ int sys_fork()
         /* If there is no enough free frames, those reserved thus far must be freed */
         if ((resv_frames[i] = alloc_frame()) == -1) {
             while (i >= 0) free_frame(resv_frames[i--]);
+            update_stats(current(), RSYS_TO_RUSER);
             return -ENOMEM;
         }
     }
@@ -127,32 +134,101 @@ int sys_fork()
     /* Adds child process to ready queue and returns its PID from parent */
     list_add_tail(&(pcb_child->list), &readyqueue);
 
+    update_stats(current(), RSYS_TO_RUSER);
+
     return PID;
 }
 
+/* TODO: Debbug it further */
 void sys_exit()
 {
+    update_stats(current(), RUSER_TO_RSYS);
+
+    free_user_pages(current());
+    update_current_state_rr(&freequeue);
+    sched_next_rr();
+
+    update_stats(current(), RSYS_TO_RUSER);
+}
+
+/* TODO: Implements it */
+int sys_get_stats(int pid, struct stats *st)
+{
+    update_stats(current(), RUSER_TO_RSYS);
+
+    /* Check user parameters */
+
+    /* Checks if st pointer points to a valid user space address */
+    if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EACCES;
+    }
+
+    struct task_struct *desired_pcb = NULL;
+    struct list_head *pt_list;
+
+    /* Checks if the process associated to PID = pid exists and it's alive */
+    list_for_each(pt_list, &readyqueue) {
+        struct task_struct *pcb = list_head_to_task_struct(pt_list);
+        if ((pcb->PID == pid) & (pcb->state == ST_READY)) {
+            desired_pcb = pcb;
+            break;
+        }
+    }
+
+    if (desired_pcb == NULL) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EPERM;
+    }
+
+    if (copy_to_user(&(desired_pcb->statistics), st, sizeof(struct stats)) < 0) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EPERM;
+    }
+
+    update_stats(current(), RSYS_TO_RUSER);
+    return 0;
 }
 
 int sys_write(int fd, char *buffer, int size)
 {
+    update_stats(current(), RUSER_TO_RSYS);
+
     /* Check user parameters */
     int err = check_fd(fd, ESCRIPTURA);
-    if (err < 0) return err;
-    if (buffer == NULL) return -EFAULT;
-    if (size < 0) return -EINVAL;
+    if (err < 0) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return err;
+    }
+    if (buffer == NULL) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EFAULT;
+    }
+    if (size < 0) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EINVAL;
+    }
 
-    /* access_ok() must be called to check the user space pointer buffer */
+    /* Checks if buffer pointer points to a valid user space address */
+    if (!access_ok(VERIFY_WRITE, buffer, size)) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EACCES;
+    }
 
     char sys_buffer[size];
     copy_from_user(buffer, sys_buffer, size);
 
     /* Call the requested service routine and return the result */
-    return sys_write_console(sys_buffer, size);
+    err = sys_write_console(sys_buffer, size);
+    update_stats(current(), RSYS_TO_RUSER);
+    return err;
+
 }
 
 int sys_gettime()
 {
+    update_stats(current(), RUSER_TO_RSYS);
+    update_stats(current(), RSYS_TO_RUSER);
     return zeos_ticks;
 }
 

@@ -59,7 +59,7 @@ int strlen(char *a)
     return i;
 }
 
-/* Wrapper for the system call sys_write().
+/* Wrapper for the system call sys_write(int fd, char *buffer, int size).
  * It has got the entry 4 (0x04) in the system call table
  */
 int write(int fd, char *buffer, int size)
@@ -135,11 +135,28 @@ int fork()
 /* Does not return any value */
 void exit()
 {
-    int ret;
     __asm__ __volatile__(
         "int $0x80\n"
         : /* No output */
         : "a" (0x01)
     );
+}
+
+/* Wrapper for the system call sys_get_stats(int pid, struct stats *st).
+ * It has got the entry 35 (0x23) in the system call table
+ */
+
+/* TODO: Debugg it further */
+/* Does not return any value */
+int get_stats(int pid, struct stats *st)
+{
+    int ret;
+    __asm__ __volatile__(
+        "int $0x80\n"
+        : "=a" (ret)
+        : "a" (0x23)
+    );
+
+    SET_ERRNO_RETURN
 }
 
