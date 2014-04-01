@@ -154,12 +154,29 @@ void sys_exit()
 /* TODO: Implements it */
 int sys_get_stats(int pid, struct stats *st)
 {
+    /* char pid1[10]; */
+    /* char pid2[10]; */
+    /* itoa(current()->PID, pid1); */
+    /* itoa(pid, pid2); */
+    /* printk(pid1); */
+    /* printk("      "); */
+    /* printk(pid2); */
+    /* printk("\n"); */
+    /* if (pid == 1) { */
+    /*     printk("HOHOHOH\n"); */
+    /* } */
+    /* if (current()->PID == 1) { */
+    /*     printk("HEHEHE\n"); */
+    /* } */
+
+    printk("Entrem a sys_get_stats\n");
     update_stats(current(), RUSER_TO_RSYS);
 
     /* Check user parameters */
 
     /* Checks if st pointer points to a valid user space address */
-    if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) {
+    if (!access_ok(VERIFY_READ, st, sizeof(struct stats))) {
+        printk("if del access_ok\n");
         update_stats(current(), RSYS_TO_RUSER);
         return -EFAULT;
     }
@@ -169,23 +186,29 @@ int sys_get_stats(int pid, struct stats *st)
 
     /* Checks if the process associated to PID = pid exists and it's alive */
     list_for_each(pt_list, &readyqueue) {
+        printk("Iterem la llista de readyqueue\n");
         struct task_struct *pcb = list_head_to_task_struct(pt_list);
         if ((pcb->PID == pid) & (pcb->state == ST_READY)) {
             desired_pcb = pcb;
             break;
         }
     }
+    /* Checks if the pid corresponds to the current process */
+    if (pid == current()->PID) desired_pcb = current();
 
     if (desired_pcb == NULL) {
+        printk("desired_pcb == NULL\n");
         update_stats(current(), RSYS_TO_RUSER);
         return -EPERM;
     }
 
     if (copy_to_user(&(desired_pcb->statistics), st, sizeof(struct stats)) < 0) {
+        printk("copy_to_user FAIL\n");
         update_stats(current(), RSYS_TO_RUSER);
         return -EPERM;
     }
 
+    printk("Normal exit!!\n");
     update_stats(current(), RSYS_TO_RUSER);
     return 0;
 }
