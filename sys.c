@@ -161,7 +161,7 @@ int sys_get_stats(int pid, struct stats *st)
     /* Checks if st pointer points to a valid user space address */
     if (!access_ok(VERIFY_WRITE, st, sizeof(struct stats))) {
         update_stats(current(), RSYS_TO_RUSER);
-        return -EACCES;
+        return -EFAULT;
     }
 
     struct task_struct *desired_pcb = NULL;
@@ -212,7 +212,7 @@ int sys_write(int fd, char *buffer, int size)
     /* Checks if buffer pointer points to a valid user space address */
     if (!access_ok(VERIFY_WRITE, buffer, size)) {
         update_stats(current(), RSYS_TO_RUSER);
-        return -EACCES;
+        return -EFAULT;
     }
 
     char sys_buffer[size];
