@@ -15,11 +15,11 @@ if [ -f ${RESULTS_FILE} ] ; then
 fi
 
 for i in $(seq ${INI_TEST} ${FI_TEST}) ; do
-    sed -i -e "s/runjp_rank.*/runjp_rank($i, $i);/" user.c 
+    sed -i -e "s/runjp_rank.*/runjp_rank($i, $i);/" user.c
     make clean && make && make emul > ${OUTPUT_FILE} &
     sleep 3
-    killall bochs 
-    sleep 1 
+    killall bochs
+    sleep 1
     grep "Test\[$i\]" ${OUTPUT_FILE} >> ${RESULTS_FILE}
 done
 exit
