@@ -118,7 +118,7 @@ void init_task1(void)
 
     /* Its PID always is defiend as 1 */
     pcb_init_task->PID = 1;
-    
+
     set_quantum(pcb_init_task, DEFAULT_QUANTUM);
     pcb_init_task->state = ST_READY;
     init_stats(pcb_init_task);
@@ -221,7 +221,7 @@ void update_current_state_rr(struct list_head *dst_queue)
 void sched_next_rr()
 {
     struct task_struct *pcb_next_task;
-    
+
     /* If there is not any process in the readyqueue, executes idle process */
     if (list_empty(&readyqueue)) pcb_next_task = idle_task;
     else {
