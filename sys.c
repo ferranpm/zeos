@@ -192,7 +192,7 @@ int sys_get_stats(int pid, struct stats *st)
     else {
         int i = 0, found = 0;
         while (i++ < NR_TASKS && !found) {
-            if (task[i].task.PID == pid) {
+            if (task[i].task.PID == pid && task[i].task.state != ST_ZOMBIE) {
                 found = 1;
                 desired_pcb = &task[i];
             }
