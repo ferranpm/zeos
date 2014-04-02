@@ -42,7 +42,7 @@ int __attribute__ ((__section__(".text.main")))
     else write(1, parent, strlen(parent));*/
 
     /* Run a test suite provided by lab course */
-    runjp_rank(0, 12);
+    runjp_rank(12, 28);
 
     while (1) {
         /*pid = getpid();
