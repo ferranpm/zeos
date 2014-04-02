@@ -171,18 +171,30 @@ int sys_get_stats(int pid, struct stats *st)
     }
 
     struct task_struct *desired_pcb = NULL;
-    struct list_head *pt_list;
 
     /* Checks if the pid corresponds to the current process or the process
      * associated to PID = pid exists and it's alive
      */
     if (pid == current()->PID) desired_pcb = current();
+
+    /* Comment this section for future improvements on ZeOS
     else {
+        struct list_head *pt_list;
         list_for_each(pt_list, &readyqueue) {
             struct task_struct *pcb = list_head_to_task_struct(pt_list);
             if ((pcb->PID == pid) && (pcb->state == ST_READY)) {
                 desired_pcb = pcb;
                 break;
+            }
+        }
+    } */
+
+    else {
+        int i = 0, found = 0;
+        while (i++ < NR_TASKS && !found) {
+            if (task[i].task.PID == pid && task[i].task.state == ST_READY) {
+                found = 1;
+                desired_pcb = &task[i];
             }
         }
     }
