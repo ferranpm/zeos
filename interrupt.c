@@ -96,6 +96,7 @@ void setIdt()
 
 void keyboard_routine()
 {
+    update_stats(current(), RUSER_TO_RSYS);
     unsigned char key = inb(0x60);
     if (key < 0x80) {
         key = char_map[key];
@@ -104,16 +105,19 @@ void keyboard_routine()
         /* TODO: Is this arbitrary position (10,20) valid for E1 checkpoint? */
         printc_xy(10, 20, key);
     }
+    update_stats(current(), RSYS_TO_RUSER);
 }
 
 void clock_routine()
 {
     /* zeos_show_clock() */
+    update_stats(current(), RUSER_TO_RSYS);
     ++zeos_ticks;
     update_sched_data_rr();
     if (needs_sched_rr()) {
         update_current_state_rr(&readyqueue);
         sched_next_rr();
     }
+    update_stats(current(), RSYS_TO_RUSER);
 }
 

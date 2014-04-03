@@ -117,9 +117,6 @@ int sys_fork()
     pcb_child->PID = PID;
     init_stats(pcb_child);
 
-    /* TODO: Does the child inherit the same quantum as its parent? */
-    /* set_quantum(pcb_child, DEFAULT_QUANTUM); */
-
     /* TODO: Write documentation for returning child's approach */
     unsigned int ebp;
     __asm__ __volatile__(
