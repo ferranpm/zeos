@@ -7,7 +7,7 @@
 #include <hardware.h>
 #include <io.h>
 #include <entry.h>
-
+#include <sched.h>
 #include <zeos_interrupt.h>
 
 Gate idt[IDT_ENTRIES];
@@ -92,16 +92,16 @@ void setIdt()
     set_idt_reg(&idtR);
 }
 
-#include <sched.h>
-
 void keyboard_routine()
 {
     update_stats(current(), RUSER_TO_RSYS);
+
     unsigned char key = inb(0x60);
     if (key < 0x80) {
         key = char_map[key];
         if (key == '\0') key = 'C';
 
+        /* Arbitrary position where prints the key on screen */
         printc_xy(10, 20, key);
     }
     update_stats(current(), RSYS_TO_RUSER);
@@ -110,7 +110,10 @@ void keyboard_routine()
 void clock_routine()
 {
     update_stats(current(), RUSER_TO_RSYS);
+
     ++zeos_ticks;
+
+    /* Generic scheduling algorithm */
     update_sched_data_rr();
     if (needs_sched_rr()) {
         update_current_state_rr(&readyqueue);

@@ -6,7 +6,7 @@ int pid;
 int __attribute__ ((__section__(".text.main"))) main(void)
 {
     /* Run a test suite provided by lab course */
-    runjp_rank(11, 28);
+    runjp_rank(0, 28);
 
     while (1);
 
