@@ -27,6 +27,10 @@ int check_fd(int fd, int permissions)
     return 0;
 }
 
+int ret_from_fork() {
+    return 0;
+}
+
 int sys_ni_syscall()
 {
     update_stats(current(), RUSER_TO_RSYS);
@@ -41,10 +45,6 @@ int sys_getpid()
     return current()->PID;
 }
 
-int ret_from_fork() {
-    return 0;
-}
-
 int sys_fork()
 {
     update_stats(current(), RUSER_TO_RSYS);
@@ -55,7 +55,7 @@ int sys_fork()
     /* Returns error if there isn't any available task in the free queue */
     if (list_empty(&freequeue)) return -EAGAIN;
 
-    /* Needed variables related to child and father processes */
+    /* Needed variables related to child and parent processes */
     struct list_head *free_pcb = list_first(&freequeue);
     union task_union *child = (union task_union*)list_head_to_task_struct(free_pcb);
     union task_union *parent = (union task_union *)current();
@@ -64,18 +64,20 @@ int sys_fork()
 
     list_del(free_pcb);
 
-    /* Inherits system code+data from father to child */
+    /* Inherits system code+data */
     copy_data(parent, child, sizeof(union task_union));
 
-    /* Reserve free frames (physical memory) to allocate child's user data */
+    /* Allocates new page directory for child process */
     allocate_DIR(pcb_child);
+    
     page_table_entry* pagt_child = get_PT(pcb_child);
     page_table_entry* pagt_parent = get_PT(pcb_parent);
 
-    /* Array of free frames that will be reserved for child's user data allocation */
+    /* Reserve free frames (physical memory) to allocate child's user data */
     int resv_frames[NUM_PAG_DATA];
 
     for (i = 0; i < NUM_PAG_DATA; i++) {
+
         /* If there is no enough free frames, those reserved thus far must be freed */
         if ((resv_frames[i] = alloc_frame()) == -1) {
             while (i >= 0) free_frame(resv_frames[i--]);
@@ -84,17 +86,25 @@ int sys_fork()
         }
     }
 
-    /* Inherit user code. Since it's shared among child and father, only it's needed
-     * to update child's table page in order to map the correpond entries to frames
+    /* Inherits user code. Since it's shared among child and father, only it's needed
+     * to update child's page table in order to map the correpond entries to frames
      * which allocates father's user code.
      */
     for (i = PAG_LOG_INIT_CODE_P0; i < PAG_LOG_INIT_DATA_P0; i++) {
         set_ss_pag(pagt_child, i, get_frame(pagt_parent, i));
     }
 
+    /* Inherits user data. Since each process has its own copy allocated in physical
+     * memory, it's needed to copy the user data from parent process to the news
+     * reserved frames. First the page table entries from child process must be 
+     * associated to the new reserved frames. Then the user copy data is performed by
+     * modifying the logical adress space of the parent to points to reserved frames,
+     * then makes the copy of data, and finally deletes these new entries of parent's
+     * page table to deny the access to the child's user data.
+     */
     unsigned int stride = PAGE_SIZE * NUM_PAG_DATA;
     for (i = 0; i < NUM_PAG_DATA; i++) {
-        /* Associates a logical page from child to physical reserved frame */
+        /* Associates a logical page from child's page table to physical reserved frame */
         set_ss_pag(pagt_child, PAG_LOG_INIT_DATA_P0+i, resv_frames[i]);
 
         /* Inherits one page of user data */
@@ -107,13 +117,14 @@ int sys_fork()
     /* Flushes entire TLB */
     set_cr3(get_DIR(pcb_parent));
 
-    /* Updates child's PCB (Only the ones that the process does not inherit) */
+    /* Updates child's PCB (only the ones that the child process does not inherit) */
     PID = new_pid();
     pcb_child->PID = PID;
+    pcb_child->state = ST_READY;
     init_stats(pcb_child);
 
-    /* Prepares the return of the new process, it must return a 0 value
-     * and his kernel_esp must point to the top of the stack
+    /* Prepares the return of child process. It must return 0
+     * and its kernel_esp must point to the top of the stack
      */
     unsigned int ebp;
     __asm__ __volatile__(
@@ -122,8 +133,10 @@ int sys_fork()
     );
 
     unsigned int stack_stride = (ebp - (unsigned int)parent)/sizeof(unsigned long);
-    /* Dummy value for ebp (new process) */
+
+    /* Dummy value for ebp for the child process */
     child->stack[stack_stride-1] = 0;
+
     child->stack[stack_stride] = (unsigned long)&ret_from_fork;
     child->task.kernel_esp = &child->stack[stack_stride-1];
 
@@ -138,7 +151,10 @@ int sys_fork()
 void sys_exit()
 {
     update_stats(current(), RUSER_TO_RSYS);
-    current()->state = ST_FREE;
+
+    /* To detroy the process, it's needed to free all resources of the process
+     * and schedules the next task to be executed by the CPU
+     */
     free_user_pages(current());
     update_current_state_rr(&freequeue);
     sched_next_rr();
@@ -232,7 +248,7 @@ int sys_write(int fd, char *buffer, int size)
     char sys_buffer[size];
     copy_from_user(buffer, sys_buffer, size);
 
-    /* Call the requested service routine and return the result */
+    /* Call the requested service routine (hardware dependent) and return the result */
     err = sys_write_console(sys_buffer, size);
     update_stats(current(), RSYS_TO_RUSER);
     return err;

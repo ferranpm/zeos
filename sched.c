@@ -17,7 +17,6 @@ struct task_struct *list_head_to_task_struct(struct list_head *l)
 }
 #endif
 
-struct list_head blocked;
 struct list_head freequeue;
 struct list_head readyqueue;
 
@@ -26,6 +25,7 @@ struct task_struct *idle_task;
 /* Values 0 and 1 are reserved for idle and initial process respectively */
 int next_free_pid = 2;
 
+/* Will be properly initialized inside init_sched() function */
 int curr_quantum = 0;
 
 int get_quantum(struct task_struct *t)
@@ -50,7 +50,6 @@ page_table_entry * get_PT (struct task_struct *t)
     return (page_table_entry *)(((unsigned int)(t->dir_pages_baseAddr->bits.pbase_addr))<<12);
 }
 
-
 int allocate_DIR(struct task_struct *t)
 {
     int pos;
@@ -61,7 +60,13 @@ int allocate_DIR(struct task_struct *t)
 
 void cpu_idle(void)
 {
-    __asm__ __volatile__("sti": : :"memory");
+    __asm__ __volatile__(
+        "sti\n"
+        :
+        :
+        :"memory"
+    );
+    
     while (1);
 }
 
@@ -97,6 +102,8 @@ void init_idle (void)
 
     union task_union *idle_task_stack = (union task_union *)idle_task;
     idle_task_stack->stack[KERNEL_STACK_SIZE-1] = (unsigned long)&cpu_idle;
+
+    /* Dummy value to assign to register ebp when undoing the dynamic link */
     idle_task_stack->stack[KERNEL_STACK_SIZE-2] = 0;
 
     idle_task->kernel_esp = (unsigned long *)&(idle_task_stack->stack[KERNEL_STACK_SIZE-2]);
@@ -143,10 +150,12 @@ void inner_task_switch(union task_union *t)
 
     tss.esp0 = KERNEL_ESP(t);
 
+    /* Changes the user address space with the page directory of the new process */
     set_cr3(get_DIR(t));
 
-    /* Saves the current address of the stack of the current process
-     * and sets the address of the stack of the new process
+    /* Saves the current value of ebp register in the current PCB process, sets the
+     * esp register with the address of system stack of the new process, restores
+     * ebp register from the stack and returns.
      */
     __asm__ __volatile__ (
         "mov %%ebp,%0\n"
@@ -194,17 +203,17 @@ int needs_sched_rr()
 void update_current_state_rr(struct list_head *dst_queue)
 {
     /* Updates the state of current process */
-    struct task_struct *curr_task = current();
-    if (dst_queue == &freequeue) curr_task->state = ST_FREE;
-    else if (dst_queue == &readyqueue) curr_task->state = ST_READY;
-    else curr_task->state = ST_BLOCKED;
+    struct task_struct *pcb_curr_task = current();
+    if (dst_queue == &freequeue) pcb_curr_task->state = ST_FREE;
+    else if (dst_queue == &readyqueue) pcb_curr_task->state = ST_READY;
+    else pcb_curr_task->state = ST_BLOCKED;
 
     /* Removes current process from its current queue and put it to dst_queue
-     * (only if the current process is not the idle process)
+     * only if the current process is not the idle process
      */
-    if (curr_task != idle_task) {
-        list_del(&(curr_task->list));
-        list_add_tail(&(curr_task->list), dst_queue);
+    if (pcb_curr_task != idle_task) {
+        list_del(&(pcb_curr_task->list));
+        list_add_tail(&(pcb_curr_task->list), dst_queue);
     }
 }
 

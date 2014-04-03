@@ -16,7 +16,11 @@ int errno = 0;
 
 const char *sys_errlist[] = {
    [0]      =  "Unknown error\n",
+   [EPERM]  =  "Operation not permitted\n",
+   [ESRCH]  =  "No such process\n",
    [EBADF]  =  "Bad file number\n",
+   [EAGAIN] =  "Try again\n",
+   [ENOMEM] =  "Out of memory\n",
    [EACCES] =  "Permission denied\n",
    [EFAULT] =  "Bad addresss\n",
    [EINVAL] =  "Invalid argument\n",
@@ -58,6 +62,10 @@ int strlen(char *a)
     return i;
 }
 
+void perror() {
+    write(1, *(sys_errlist + errno), strlen(*(sys_errlist + errno)));
+}
+
 /* Wrapper for the system call sys_write(int fd, char *buffer, int size).
  * It has got the entry 4 (0x04) in the system call table
  */
@@ -71,10 +79,6 @@ int write(int fd, char *buffer, int size)
     );
 
     SET_ERRNO_RETURN
-}
-
-void perror() {
-    write(1, *(sys_errlist + errno), strlen(*(sys_errlist + errno)));
 }
 
 /* Wrapper for the system call sys_gettime().
@@ -95,7 +99,6 @@ int gettime()
 /* Wrapper for the system call sys_getpid().
  * It has got the entry 20 (0x14) in the system call table
  */
-
 int getpid()
 {
     int ret;
@@ -111,7 +114,6 @@ int getpid()
 /* Wrapper for the system call sys_fork().
  * It has got the entry 2 (0x02) in the system call table
  */
-
 int fork()
 {
     int ret;
@@ -125,10 +127,9 @@ int fork()
 }
 
 /* Wrapper for the system call sys_exit().
- * It has got the entry 1 (0x01) in the system call table
+ * It has got the entry 1 (0x01) in the system call table.
+ * Does not return any value
  */
-
-/* Does not return any value */
 void exit()
 {
     __asm__ __volatile__(
@@ -141,7 +142,6 @@ void exit()
 /* Wrapper for the system call sys_get_stats(int pid, struct stats *st).
  * It has got the entry 35 (0x23) in the system call table
  */
-
 int get_stats(int pid, struct stats *st)
 {
     int ret;
