@@ -16,7 +16,7 @@
 /* TODO: Sets properly the default value for quantum (process scheduling) */
 #define DEFAULT_QUANTUM 50
 
-enum state_t { ST_RUN, ST_READY, ST_BLOCKED, ST_ZOMBIE };
+enum state_t { ST_RUN, ST_READY, ST_BLOCKED, ST_FREE };
 enum transition_t { RUSER_TO_RSYS, RSYS_TO_RUSER, RSYS_TO_READY, READY_TO_RSYS };
 
 struct task_struct {

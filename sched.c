@@ -205,7 +205,7 @@ void update_current_state_rr(struct list_head *dst_queue)
 {
     /* Updates the state of current process */
     struct task_struct *curr_task = current();
-    if (dst_queue == &freequeue) curr_task->state = ST_ZOMBIE;
+    if (dst_queue == &freequeue) curr_task->state = ST_FREE;
     else if (dst_queue == &readyqueue) curr_task->state = ST_READY;
     else curr_task->state = ST_BLOCKED;
 

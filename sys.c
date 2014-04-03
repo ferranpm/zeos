@@ -144,12 +144,10 @@ int sys_fork()
 void sys_exit()
 {
     update_stats(current(), RUSER_TO_RSYS);
-
+    current()->state = ST_FREE;
     free_user_pages(current());
     update_current_state_rr(&freequeue);
     sched_next_rr();
-
-    update_stats(current(), RSYS_TO_RUSER);
 }
 
 /* TODO: Implements it */
@@ -192,7 +190,7 @@ int sys_get_stats(int pid, struct stats *st)
     else {
         int i = 0, found = 0;
         while (i < NR_TASKS && !found) {
-            if (task[i].task.PID == pid && task[i].task.state != ST_ZOMBIE) {
+            if (task[i].task.PID == pid && task[i].task.state != ST_FREE) {
                 found = 1;
                 desired_pcb = &task[i];
             }
