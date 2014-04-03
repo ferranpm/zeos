@@ -8,12 +8,12 @@
 #include <utils.h>
 
 union task_union task[NR_TASKS]
-  __attribute__((__section__(".data.task")));
+__attribute__((__section__(".data.task")));
 
 #if 1
 struct task_struct *list_head_to_task_struct(struct list_head *l)
 {
-  return list_entry( l, struct task_struct, list);
+    return list_entry( l, struct task_struct, list);
 }
 #endif
 
@@ -41,33 +41,28 @@ void set_quantum(struct task_struct *t, int new_quantum)
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t)
 {
-	return t->dir_pages_baseAddr;
+    return t->dir_pages_baseAddr;
 }
 
 /* get_PT - Returns the Page Table address for task 't' */
 page_table_entry * get_PT (struct task_struct *t)
 {
-	return (page_table_entry *)(((unsigned int)(t->dir_pages_baseAddr->bits.pbase_addr))<<12);
+    return (page_table_entry *)(((unsigned int)(t->dir_pages_baseAddr->bits.pbase_addr))<<12);
 }
 
 
 int allocate_DIR(struct task_struct *t)
 {
-	int pos;
-	pos = ((int)t-(int)task)/sizeof(union task_union);
-	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos];
-	return 1;
+    int pos;
+    pos = ((int)t-(int)task)/sizeof(union task_union);
+    t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos];
+    return 1;
 }
 
 void cpu_idle(void)
 {
-	__asm__ __volatile__("sti": : :"memory");
-
-    printk("CPU IDLE");
-	while(1)
-	{
-	;
-	}
+    __asm__ __volatile__("sti": : :"memory");
+    while (1);
 }
 
 void init_freequeue()
@@ -85,7 +80,6 @@ void init_readyqueue()
     INIT_LIST_HEAD(&readyqueue);
 }
 
-/* TODO: Debugg it further */
 void init_idle (void)
 {
     struct list_head *first = list_first(&freequeue);
@@ -99,7 +93,6 @@ void init_idle (void)
     idle_task->state = ST_READY;
     init_stats(idle_task);
 
-    /* TODO: Why is this call necessary? */
     allocate_DIR(idle_task);
 
     union task_union *idle_task_stack = (union task_union *)idle_task;
@@ -109,7 +102,6 @@ void init_idle (void)
     idle_task->kernel_esp = (unsigned long *)&(idle_task_stack->stack[KERNEL_STACK_SIZE-2]);
 }
 
-/* TODO: Debugg it further */
 void init_task1(void)
 {
     struct list_head *first = list_first(&freequeue);
@@ -126,7 +118,6 @@ void init_task1(void)
     allocate_DIR(pcb_init_task);
     set_user_pages(pcb_init_task);
 
-    // TODO: Is this necessary?? (point 4 of init_task1)
     tss.esp0 = KERNEL_ESP((union task_union*)pcb_init_task);
 
     set_cr3(get_DIR(pcb_init_task));
@@ -146,17 +137,17 @@ void init_sched()
     curr_quantum = DEFAULT_QUANTUM;
 }
 
-/* TODO: Debugg it further */
 void inner_task_switch(union task_union *t)
 {
     struct task_struct *curr_task_pcb = current();
 
     tss.esp0 = KERNEL_ESP(t);
 
-    /* TODO: Is it necessary to check anything before sets cr3 register? */
-    /* set_cr3(get_DIR(curr_task_pcb)); */
     set_cr3(get_DIR(t));
 
+    /* Saves the current address of the stack of the current process
+     * and sets the address of the stack of the new process
+     */
     __asm__ __volatile__ (
         "mov %%ebp,%0\n"
         "movl %1, %%esp\n"
@@ -167,7 +158,6 @@ void inner_task_switch(union task_union *t)
     );
 }
 
-/* TODO: Debugg it further */
 void task_switch(union task_union *t)
 {
     /* Saves the registers esi, edi and ebx manually */
@@ -184,8 +174,8 @@ struct task_struct* current()
     int ret_value;
 
     __asm__ __volatile__(
-  	    "movl %%esp, %0"
-	    : "=g" (ret_value)
+        "movl %%esp, %0"
+        : "=g" (ret_value)
     );
 
     return (struct task_struct*)(ret_value&0xfffff000);

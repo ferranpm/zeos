@@ -65,11 +65,9 @@ int sys_fork()
     list_del(free_pcb);
 
     /* Inherits system code+data from father to child */
-    /* TODO: How can we check whether the following copy performs successfully? */
     copy_data(parent, child, sizeof(union task_union));
 
     /* Reserve free frames (physical memory) to allocate child's user data */
-
     allocate_DIR(pcb_child);
     page_table_entry* pagt_child = get_PT(pcb_child);
     page_table_entry* pagt_parent = get_PT(pcb_parent);
@@ -78,7 +76,6 @@ int sys_fork()
     int resv_frames[NUM_PAG_DATA];
 
     for (i = 0; i < NUM_PAG_DATA; i++) {
-
         /* If there is no enough free frames, those reserved thus far must be freed */
         if ((resv_frames[i] = alloc_frame()) == -1) {
             while (i >= 0) free_frame(resv_frames[i--]);
@@ -92,17 +89,15 @@ int sys_fork()
      * which allocates father's user code.
      */
     for (i = PAG_LOG_INIT_CODE_P0; i < PAG_LOG_INIT_DATA_P0; i++) {
-       set_ss_pag(pagt_child, i, get_frame(pagt_parent, i));
+        set_ss_pag(pagt_child, i, get_frame(pagt_parent, i));
     }
 
-    /* Associates logical pages from child to physical reserved frame */
-    for (i = 0; i < NUM_PAG_DATA; i++) {
-        set_ss_pag(pagt_child, PAG_LOG_INIT_DATA_P0+i, resv_frames[i]);
-    }
-
-    /* Inherits user data */
     unsigned int stride = PAGE_SIZE * NUM_PAG_DATA;
     for (i = 0; i < NUM_PAG_DATA; i++) {
+        /* Associates a logical page from child to physical reserved frame */
+        set_ss_pag(pagt_child, PAG_LOG_INIT_DATA_P0+i, resv_frames[i]);
+
+        /* Inherits one page of user data */
         unsigned int logic_addr = (i + PAG_LOG_INIT_DATA_P0) * PAGE_SIZE;
         set_ss_pag(pagt_parent, i + PAG_LOG_INIT_DATA_P0 + NUM_PAG_DATA, resv_frames[i]);
         copy_data((void *)(logic_addr), (void *)(logic_addr + stride), PAGE_SIZE);
@@ -112,12 +107,14 @@ int sys_fork()
     /* Flushes entire TLB */
     set_cr3(get_DIR(pcb_parent));
 
-    /* Updates child's PCB */
+    /* Updates child's PCB (Only the ones that the process does not inherit) */
     PID = new_pid();
     pcb_child->PID = PID;
     init_stats(pcb_child);
 
-    /* TODO: Write documentation for returning child's approach */
+    /* Prepares the return of the new process, it must return a 0 value
+     * and his kernel_esp must point to the top of the stack
+     */
     unsigned int ebp;
     __asm__ __volatile__(
         "mov %%ebp,%0\n"
@@ -125,8 +122,9 @@ int sys_fork()
     );
 
     unsigned int stack_stride = (ebp - (unsigned int)parent)/sizeof(unsigned long);
+    /* Dummy value for ebp (new process) */
+    child->stack[stack_stride-1] = 0;
     child->stack[stack_stride] = (unsigned long)&ret_from_fork;
-    child->stack[stack_stride-1] = (unsigned long)&ret_from_fork;
     child->task.kernel_esp = &child->stack[stack_stride-1];
 
     /* Adds child process to ready queue and returns its PID from parent */
@@ -137,7 +135,6 @@ int sys_fork()
     return PID;
 }
 
-/* TODO: Debbug it further */
 void sys_exit()
 {
     update_stats(current(), RUSER_TO_RSYS);
@@ -147,13 +144,11 @@ void sys_exit()
     sched_next_rr();
 }
 
-/* TODO: Implements it */
 int sys_get_stats(int pid, struct stats *st)
 {
     update_stats(current(), RUSER_TO_RSYS);
 
     /* Check user parameters */
-
     if (pid < 0) {
         update_stats(current(), RSYS_TO_RUSER);
         return -EINVAL;
@@ -171,6 +166,16 @@ int sys_get_stats(int pid, struct stats *st)
      * associated to PID = pid exists and it's alive
      */
     if (pid == current()->PID) desired_pcb = current();
+    else {
+        int i = 0, found = 0;
+        while (i < NR_TASKS && !found) {
+            if (task[i].task.PID == pid && task[i].task.state != ST_FREE) {
+                found = 1;
+                desired_pcb = &task[i];
+            }
+            i++;
+        }
+    }
 
     /* Comment this section for future improvements on ZeOS
     else {
@@ -182,18 +187,8 @@ int sys_get_stats(int pid, struct stats *st)
                 break;
             }
         }
-    } */
-
-    else {
-        int i = 0, found = 0;
-        while (i < NR_TASKS && !found) {
-            if (task[i].task.PID == pid && task[i].task.state != ST_FREE) {
-                found = 1;
-                desired_pcb = &task[i];
-            }
-            i++;
-        }
     }
+    */
 
     if (desired_pcb == NULL) {
         update_stats(current(), RSYS_TO_RUSER);

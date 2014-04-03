@@ -14,7 +14,6 @@
 
 int errno = 0;
 
-/* TODO: Complete the rest of error messages defined at errno.h */
 const char *sys_errlist[] = {
    [0]      =  "Unknown error\n",
    [EBADF]  =  "Bad file number\n",
@@ -97,7 +96,6 @@ int gettime()
  * It has got the entry 20 (0x14) in the system call table
  */
 
-/* TODO: Debugg it further */
 int getpid()
 {
     int ret;
@@ -114,7 +112,6 @@ int getpid()
  * It has got the entry 2 (0x02) in the system call table
  */
 
-/* TODO: Debugg it further */
 int fork()
 {
     int ret;
@@ -131,7 +128,6 @@ int fork()
  * It has got the entry 1 (0x01) in the system call table
  */
 
-/* TODO: Debugg it further */
 /* Does not return any value */
 void exit()
 {
@@ -146,8 +142,6 @@ void exit()
  * It has got the entry 35 (0x23) in the system call table
  */
 
-/* TODO: Debugg it further */
-/* Does not return any value */
 int get_stats(int pid, struct stats *st)
 {
     int ret;
