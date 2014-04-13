@@ -12,6 +12,7 @@
 
 #define LECTURA 0
 #define ESCRIPTURA 1
+#define BUFFER_SIZE 256
 
 extern unsigned int zeos_ticks;
 
@@ -81,6 +82,7 @@ int sys_fork()
         /* If there is no enough free frames, those reserved thus far must be freed */
         if ((resv_frames[i] = alloc_frame()) == -1) {
             while (i >= 0) free_frame(resv_frames[i--]);
+            list_add_tail(&(pcb_child->list), &freequeue);
             update_stats(current(), RSYS_TO_RUSER);
             return -ENOMEM;
         }
@@ -142,6 +144,10 @@ int sys_fork()
 
     /* Adds child process to ready queue and returns its PID from parent */
     list_add_tail(&(pcb_child->list), &readyqueue);
+
+    /* If current process is idle, immediately removes from the CPU */
+    /* DOUBT: Why if we adds this statement test[13] fails (bad semaphore inizialitation)? */
+    /* if (current()->PID = 0) sched_next_rr(); */
 
     update_stats(current(), RSYS_TO_RUSER);
 
@@ -239,20 +245,59 @@ int sys_write(int fd, char *buffer, int size)
         return -EINVAL;
     }
 
-    /* Checks if buffer pointer points to a valid user space address */
-    if (!access_ok(VERIFY_WRITE, buffer, size)) {
+    /* Performs only one write if user size buffer is less than system default size buffer */
+    if (size < BUFFER_SIZE) {
+
+        /* Checks if buffer pointer points to a valid user space address */
+        if (!access_ok(VERIFY_WRITE, buffer, size)) {
+            update_stats(current(), RSYS_TO_RUSER);
+            return -EFAULT;
+        }
+        
+        char sys_buffer[size];
+        copy_from_user(buffer, sys_buffer, size);
+
+        /* Call the requested service routine (hardware dependent) and returns the result */
+        sys_write_console(sys_buffer, size);
         update_stats(current(), RSYS_TO_RUSER);
-        return -EFAULT;
+        return size;
+    }
+    
+    int i;
+    for (i = 0; i < size; i += BUFFER_SIZE) {
+
+        /* Checks if buffer pointer points to a valid user space address */
+        if (!access_ok(VERIFY_WRITE, buffer + i, BUFFER_SIZE)) {
+            update_stats(current(), RSYS_TO_RUSER);
+            return -EFAULT;
+        }
+
+        char sys_buffer[BUFFER_SIZE];
+        copy_from_user(buffer + i, sys_buffer, BUFFER_SIZE);
+
+        /* Call the requested service routine (hardware dependent) */
+        sys_write_console(sys_buffer, BUFFER_SIZE);
     }
 
-    char sys_buffer[size];
-    copy_from_user(buffer, sys_buffer, size);
+    /* Computes the remainder bytes if there are */
+    if (i > size) {
+        int remainder = i - size;
 
-    /* Call the requested service routine (hardware dependent) and return the result */
-    err = sys_write_console(sys_buffer, size);
+        /* Checks if buffer pointer points to a valid user space address */
+        if (!access_ok(VERIFY_WRITE, buffer - BUFFER_SIZE, remainder)) {
+            update_stats(current(), RSYS_TO_RUSER);
+            return -EFAULT;
+        }
+        
+        char sys_buffer[remainder];
+        copy_from_user(buffer + size - BUFFER_SIZE, sys_buffer, remainder);
+
+        /* Call the requested service routine (hardware dependent) */
+        sys_write_console(sys_buffer, remainder);
+    }
+    
     update_stats(current(), RSYS_TO_RUSER);
-    return err;
-
+    return size;
 }
 
 int sys_gettime()

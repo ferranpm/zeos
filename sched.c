@@ -209,9 +209,10 @@ void update_current_state_rr(struct list_head *dst_queue)
     else pcb_curr_task->state = ST_BLOCKED;
 
     /* Removes current process from its current queue and put it to dst_queue
-     * only if the current process is not the idle process
+     * only if the current process is not the idle process and it's not the only
+     * available process which status is ready.
      */
-    if (pcb_curr_task != idle_task) {
+    if ((pcb_curr_task != idle_task) & (!list_empty(&readyqueue))) {
         list_del(&(pcb_curr_task->list));
         list_add_tail(&(pcb_curr_task->list), dst_queue);
     }
@@ -246,7 +247,7 @@ void init_stats(struct task_struct *pcb)
     pcb->statistics.system_ticks = 0;
     pcb->statistics.blocked_ticks = 0;
     pcb->statistics.ready_ticks = 0;
-    pcb->statistics.elapsed_total_ticks = 0;
+    pcb->statistics.elapsed_total_ticks = get_ticks();
     pcb->statistics.total_trans = 0;
     pcb->statistics.remaining_ticks = 0;
 }
