@@ -10,6 +10,11 @@
 union task_union task[NR_TASKS]
 __attribute__((__section__(".data.task")));
 
+/* TODO: Would be better to define this in mm.c and using
+ * __attribute__((__section__(".data.task"))); ?
+ */
+int dir_pages_refs[NR_TASKS] = {0};
+
 #if 1
 struct task_struct *list_head_to_task_struct(struct list_head *l)
 {
@@ -50,12 +55,36 @@ page_table_entry * get_PT (struct task_struct *t)
     return (page_table_entry *)(((unsigned int)(t->dir_pages_baseAddr->bits.pbase_addr))<<12);
 }
 
+/* TODO: Deletes when the new version works fine */
+/*
 int allocate_DIR(struct task_struct *t)
 {
     int pos;
     pos = ((int)t-(int)task)/sizeof(union task_union);
     t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos];
     return 1;
+}
+*/
+
+/* TODO: Debug it further (currently no works) */
+int allocate_DIR(struct task_struct *t)
+{
+    int pos;
+    for (pos = 0; pos < NR_TASKS; pos++) {
+        if (dir_pages_refs[pos] == 0) {
+            ++dir_pages_refs[pos];
+            t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos];
+            return 1;
+        }
+    }
+    /* TODO: If allocate_DIR finishes with errors, does return -1? */
+    return -1;
+}
+
+void update_DIR_refs(struct task_struct *t)
+{
+    /* Calculates which directory page entry has assigned */
+    ++dir_pages_refs[POS_TO_DIR_PAGES_REFS(get_DIR(t))];
 }
 
 void cpu_idle(void)

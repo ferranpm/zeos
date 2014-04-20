@@ -126,6 +126,21 @@ int fork()
     SET_ERRNO_RETURN
 }
 
+/* Wrapper for the system call sys_clone().
+ * It has got the entry 19 (0x13) in the system call table
+ */
+int clone(void *(function) (void), void *stack)
+{
+    int ret;
+    __asm__ __volatile__(
+        "int $0x80\n"
+        : "=a" (ret)
+        : "b" (function), "c" (stack), "a" (0x13)
+    );
+
+    SET_ERRNO_RETURN
+}
+
 /* Wrapper for the system call sys_exit().
  * It has got the entry 1 (0x01) in the system call table.
  * Does not return any value
