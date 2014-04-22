@@ -42,6 +42,11 @@ extern int next_free_pid;               /* Next available PID to assign */
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
 
+/* TODO: Would be better to define this in include/mm.h and using
+ * __attribute__((__section__(".data.task"))); ?
+ */
+extern int dir_pages_refs[NR_TASKS];
+
 #define KERNEL_ESP(t) (DWord) &(t)->stack[KERNEL_STACK_SIZE]
 #define INITIAL_ESP KERNEL_ESP(&task[1])
 
@@ -60,6 +65,10 @@ extern struct list_head readyqueue;
         "popl %esi\n"           \
     );
 
+/* Useful macro to manipulates directory pages references */
+#define POS_TO_DIR_PAGES_REFS(p_dir)                        \
+    (int)((p_dir - &dir_pages[0][0]) / (sizeof(dir_pages[0]))) \
+
 /* Headers for the process management */
 struct task_struct * current();
 struct task_struct *list_head_to_task_struct(struct list_head *l);
@@ -69,6 +78,7 @@ void init_task1(void);
 void init_idle(void);
 void init_sched(void);
 void task_switch(union task_union *t);
+void update_DIR_refs(struct task_struct *t);
 int allocate_DIR(struct task_struct *t);
 page_table_entry * get_PT (struct task_struct *t) ;
 page_table_entry * get_DIR (struct task_struct *t) ;

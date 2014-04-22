@@ -54,7 +54,10 @@ int sys_fork()
     unsigned int i;
 
     /* Returns error if there isn't any available task in the free queue */
-    if (list_empty(&freequeue)) return -EAGAIN;
+    if (list_empty(&freequeue)) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EAGAIN;
+    }
 
     /* Needed variables related to child and parent processes */
     struct list_head *free_pcb = list_first(&freequeue);
@@ -146,8 +149,84 @@ int sys_fork()
     list_add_tail(&(pcb_child->list), &readyqueue);
 
     /* If current process is idle, immediately removes from the CPU */
-    /* DOUBT: Why if we adds this statement test[13] fails (bad semaphore inizialitation)? */
-    /* if (current()->PID = 0) sched_next_rr(); */
+    if (current()->PID == 0) sched_next_rr();
+
+    update_stats(current(), RSYS_TO_RUSER);
+
+    return PID;
+}
+
+/* TODO: Debug it further */
+/* TODO: How and what we have to check of the user parameters? */
+int sys_clone(void (*function) (void), void *stack)
+{
+    update_stats(current(), RUSER_TO_RSYS);
+
+    int PID = -1;
+
+    /* Returns error if there isn't any available task in the free queue */
+    if (list_empty(&freequeue)) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EAGAIN;
+    }
+
+    /* Needed variables related to child and parent processes */
+    struct list_head *free_pcb = list_first(&freequeue);
+    union task_union *child = (union task_union*)list_head_to_task_struct(free_pcb);
+    union task_union *parent = (union task_union *)current();
+    struct task_struct *pcb_child = &(child->task);
+
+    list_del(free_pcb);
+
+    /* Inherits system code+data */
+    copy_data(parent, child, sizeof(union task_union));
+
+    /* Updates references for child's page directory, inherited by parent */
+    update_DIR_refs(pcb_child);
+    
+    /* Updates child's PCB (only the ones that the child process does not inherit) */
+    PID = new_pid();
+    pcb_child->PID = PID;
+    pcb_child->state = ST_READY;
+
+    /* TODO: Should stats be inherited too? */
+    /* init_stats(pcb_child); */
+
+    /* Prepares the return of child process. It must return 0
+     * and its kernel_esp must point to the top of the stack
+     */
+    unsigned int ebp;
+    __asm__ __volatile__(
+        "mov %%ebp,%0\n"
+        :"=g"(ebp)
+    );
+
+    unsigned int stack_stride = (ebp - (unsigned int)parent)/sizeof(unsigned long);
+
+    /* Dummy value for ebp for the child process */
+    /* TODO: Is it necessary with sys_clone? */
+    child->stack[stack_stride-1] = 0;
+
+    /* TODO: Is it necessary with sys_clone? */
+    child->stack[stack_stride] = (unsigned long)&ret_from_fork;
+    
+    child->task.kernel_esp = &child->stack[stack_stride-1];
+
+    /* Modifies ebp with the address of the new stack */
+    child->stack[stack_stride+6] = (unsigned long)stack;
+    
+    /* Modifies eip with the address of the new code (function) to execute */
+    child->stack[stack_stride+12] = (unsigned long)function;
+    
+    /* Modifies esp with the address of the new stack */
+    child->stack[stack_stride+15] = (unsigned long)stack;
+
+    /* Adds child process to ready queue and returns its PID from parent */
+    list_add_tail(&(pcb_child->list), &readyqueue);
+
+    /* If current process is idle, immediately removes from the CPU */
+    /* TODO: Is it necessary with sys_clone? */
+    if (current()->PID == 0) sched_next_rr();
 
     update_stats(current(), RSYS_TO_RUSER);
 
@@ -161,7 +240,11 @@ void sys_exit()
     /* To detroy the process, it's needed to free all resources of the process
      * and schedules the next task to be executed by the CPU
      */
-    free_user_pages(current());
+    
+    /* TODO: Modifies the compare statement to "== 0" */
+    if (--dir_pages_refs[POS_TO_DIR_PAGES_REFS(get_DIR(current()))] <= 0) {
+        free_user_pages(current());
+    }
     update_current_state_rr(&freequeue);
     sched_next_rr();
 }

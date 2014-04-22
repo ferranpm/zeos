@@ -21,7 +21,7 @@ ENTRY (sys_call_table)
     .long sys_ni_syscall
     .long sys_ni_syscall
     .long sys_ni_syscall
-    .long sys_ni_syscall
+    .long sys_clone
     .long sys_getpid     /* 20 */
     .long sys_ni_syscall
     .long sys_ni_syscall
