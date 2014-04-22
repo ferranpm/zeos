@@ -27,6 +27,8 @@ struct list_head readyqueue;
 
 struct task_struct *idle_task;
 
+struct sem_t sems[NR_SEMS];
+
 /* Values 0 and 1 are reserved for idle and initial process respectively */
 int next_free_pid = 2;
 
@@ -164,11 +166,24 @@ void init_task1(void)
     list_add_tail(&(pcb_init_task->list), &readyqueue);
 }
 
+void init_sems()
+{
+    int i;
+    for (i = 0; i < NR_SEMS; i++) {
+        sems[i].id = i;
+        sems[i].value = 0;
+        sems[i].owner_pid = -1;
+    }
+}
+
 void init_sched()
 {
     /* Initializes required structures to perform the process scheduling */
     init_freequeue();
     init_readyqueue();
+
+    /* Initializes array of semaphores */
+    init_sems();
 
     curr_quantum = DEFAULT_QUANTUM;
 }
@@ -299,6 +314,14 @@ void update_stats(struct task_struct *pcb, enum transition_t trans)
     case READY_TO_RSYS :
         update_stats_ready_to_rsys(pcb);
         break;
+    
+    case BLOCKED_TO_RSYS :
+        update_stats_blocked_to_rsys(pcb);
+        break;
+
+    case RSYS_TO_BLOCKED :
+        update_stats_rsys_to_blocked(pcb);
+        break;
     }
 }
 
@@ -325,5 +348,17 @@ void update_stats_ready_to_rsys(struct task_struct *pcb)
     pcb->statistics.ready_ticks += (get_ticks() - pcb->statistics.elapsed_total_ticks);
     pcb->statistics.elapsed_total_ticks = get_ticks();
     ++pcb->statistics.total_trans;
+}
+
+void update_stats_blocked_to_rsys(struct task_struct *pcb)
+{
+    pcb->statistics.blocked_ticks += (get_ticks() - pcb->statistics.elapsed_total_ticks);
+    pcb->statistics.elapsed_total_ticks = get_ticks();
+}
+
+void update_stats_rsys_to_blocked(struct task_struct *pcb)
+{
+    pcb->statistics.system_ticks += (get_ticks() - pcb->statistics.elapsed_total_ticks);
+    pcb->statistics.elapsed_total_ticks = get_ticks();
 }
 
