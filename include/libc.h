@@ -15,10 +15,15 @@ void itoa(int a, char *b);
 int strlen(char *a);
 int getpid();
 int fork();
+int clone(void (*function) (void), void *stack);
 void exit();
 void perror();
 int gettime();
 int get_stats(int pid, struct stats *st);
+int sem_init(int n_sem, unsigned int value);
+int sem_wait(int n_sem);
+int sem_signal(int n_sem);
+int sem_destroy(int n_sem);
 
 #endif  /* __LIBC_H__ */
 

@@ -9,15 +9,17 @@
 #include <types.h>
 #include <mm_address.h>
 #include <stats.h>
+#include <semaphore.h>
 
 #define NR_TASKS 10
+#define NR_SEMS 20
 #define KERNEL_STACK_SIZE 1024
 
 /* Arbitrary value */
 #define DEFAULT_QUANTUM 50
 
 enum state_t { ST_RUN, ST_READY, ST_BLOCKED, ST_FREE };
-enum transition_t { RUSER_TO_RSYS, RSYS_TO_RUSER, RSYS_TO_READY, READY_TO_RSYS };
+enum transition_t { RUSER_TO_RSYS, RSYS_TO_RUSER, RSYS_TO_READY, READY_TO_RSYS, BLOCKED_TO_RSYS, RSYS_TO_BLOCKED };
 
 struct task_struct {
     int PID;                               /* Process ID */
@@ -46,6 +48,8 @@ extern struct list_head readyqueue;
  * __attribute__((__section__(".data.task"))); ?
  */
 extern int dir_pages_refs[NR_TASKS];
+
+extern struct sem_t sems[NR_SEMS];
 
 #define KERNEL_ESP(t) (DWord) &(t)->stack[KERNEL_STACK_SIZE]
 #define INITIAL_ESP KERNEL_ESP(&task[1])
@@ -98,6 +102,8 @@ void update_stats_ruser_to_rsys(struct task_struct *pcb);
 void update_stats_rsys_to_ruser(struct task_struct *pcb);
 void update_stats_rsys_to_ready(struct task_struct *pcb);
 void update_stats_ready_to_rsys(struct task_struct *pcb);
+void update_stats_blocked_to_rsys(struct task_struct *pcb);
+void update_stats_rsys_to_blocked(struct task_struct *pcb);
 
 #endif  /* __SCHED_H__ */
 

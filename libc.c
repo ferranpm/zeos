@@ -129,7 +129,7 @@ int fork()
 /* Wrapper for the system call sys_clone().
  * It has got the entry 19 (0x13) in the system call table
  */
-int clone(void *(function) (void), void *stack)
+int clone(void (*function) (void), void *stack)
 {
     int ret;
     __asm__ __volatile__(
@@ -164,6 +164,66 @@ int get_stats(int pid, struct stats *st)
         "int $0x80\n"
         : "=a" (ret)
         : "b" (pid), "c" (st), "a" (0x23)
+    );
+
+    SET_ERRNO_RETURN
+}
+
+/* Wrapper for the system call sys_sem_init(int n_sem, unsigned int value).
+ * It has got the entry 21 (0x15) in the system call table
+ */
+int sem_init(int n_sem, unsigned int value)
+{
+    int ret;
+    __asm__ __volatile__(
+        "int $0x80\n"
+        : "=a" (ret)
+        : "b" (n_sem), "c" (value), "a" (0x15)
+    );
+
+    SET_ERRNO_RETURN
+}
+
+/* Wrapper for the system call sys_sem_wait(int n_sem).
+ * It has got the entry 22 (0x16) in the system call table
+ */
+int sem_wait(int n_sem)
+{
+    int ret;
+    __asm__ __volatile__(
+        "int $0x80\n"
+        : "=a" (ret)
+        : "b" (n_sem), "a" (0x16)
+    );
+
+    SET_ERRNO_RETURN
+}
+
+/* Wrapper for the system call sys_sem_signal(int n_sem).
+ * It has got the entry 23 (0x17) in the system call table
+ */
+int sem_signal(int n_sem)
+{
+    int ret;
+    __asm__ __volatile__(
+        "int $0x80\n"
+        : "=a" (ret)
+        : "b" (n_sem), "a" (0x17)
+    );
+
+    SET_ERRNO_RETURN
+}
+
+/* Wrapper for the system call sys_sem_destroy(int n_sem).
+ * It has got the entry 24 (0x18) in the system call table
+ */
+int sem_destroy(int n_sem)
+{
+    int ret;
+    __asm__ __volatile__(
+        "int $0x80\n"
+        : "=a" (ret)
+        : "b" (n_sem), "a" (0x18)
     );
 
     SET_ERRNO_RETURN
