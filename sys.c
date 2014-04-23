@@ -334,7 +334,7 @@ int sys_sem_init(int n_sem, unsigned int value)
     }
 
     sems[n_sem].owner_pid = current()->PID;
-    sems[n_sem].value = value;
+    sems[n_sem].count = value;
     INIT_LIST_HEAD(&(sems[n_sem].semqueue));
 
     update_stats(current(), RSYS_TO_RUSER);
@@ -343,11 +343,59 @@ int sys_sem_init(int n_sem, unsigned int value)
 
 int sys_sem_wait(int n_sem)
 {
+    update_stats(current(), RUSER_TO_RSYS);
+   
+    /* Check user parameters */
+    if (n_sem < 0 || n_sem >= NR_SEMS || sems[n_sem].owner_pid == -1) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EPERM;
+    }
+
+    if (sems[n_sem].count > 0) --sems[n_sem].count;
+    else {
+        struct list_head *semqueue = &(sems[n_sem].semqueue);
+        struct list_head *curr_task = &(current()->list);
+        list_del(curr_task);
+        current()->state = ST_BLOCKED;
+        list_add_tail(curr_task, semqueue);
+        update_stats(current(), RSYS_TO_BLOCKED);
+        sched_next_rr();
+    }
+
+    /* Assures that the semaphore was destroyed while the process is blocked */
+    if (sems[n_sem].owner_pid != -1) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EPERM;
+    }
+
+    update_stats(current(), RSYS_TO_RUSER);
     return 0;
 }
 
 int sys_sem_signal(int n_sem)
 {
+    update_stats(current(), RUSER_TO_RSYS);
+   
+    /* Check user parameters */
+    if (n_sem < 0 || n_sem >= NR_SEMS || sems[n_sem].owner_pid == -1) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EPERM;
+    }
+    
+    struct list_head *semqueue = &(sems[n_sem].semqueue);
+
+    /* TODO: Is (sems[n_sem].count == 0) an equivalent checking? */
+    if (list_empty(semqueue)) ++sems[n_sem].count;
+    else {
+        struct list_head *elem = list_first(semqueue);
+        struct task_struct *unblocked = list_head_to_task_struct(elem);
+        list_del(elem);
+        unblocked->state = ST_READY;
+        list_add_tail(elem, &readyqueue);
+        update_stats(current(), BLOCKED_TO_RSYS);
+    }
+
+    update_stats(current(), RSYS_TO_RUSER);
     return 0;
 }
 
@@ -369,8 +417,6 @@ int sys_sem_destroy(int n_sem)
         list_del(elem);
         unblocked->state = ST_READY;
         list_add_tail(elem, &readyqueue);
-        
-        /* TODO: Adds new stat function and translation from BLOCKED to SYSTEM */ 
         update_stats(current(), BLOCKED_TO_RSYS);
     }
 

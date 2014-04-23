@@ -5,7 +5,7 @@
 
 struct sem_t {
     int id;
-    unsigned int value;
+    unsigned int count;
     int owner_pid;
     struct list_head semqueue;
 };

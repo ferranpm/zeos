@@ -171,7 +171,7 @@ void init_sems()
     int i;
     for (i = 0; i < NR_SEMS; i++) {
         sems[i].id = i;
-        sems[i].value = 0;
+        sems[i].count = 0;
         sems[i].owner_pid = -1;
     }
 }
