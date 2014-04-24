@@ -245,6 +245,20 @@ void sys_exit()
     if (--dir_pages_refs[POS_TO_DIR_PAGES_REFS(get_DIR(current()))] <= 0) {
         free_user_pages(current());
     }
+
+    /* TODO: Must we find if this process has a semaphore and, if it's true, destroys it? */
+    int i;
+    for (i = 0; i < NR_SEMS; i++) {
+        if (sems[i].owner_pid == current()->PID) {
+            
+            /* TODO: What happens if sem_destroy returns error? */
+            sys_sem_destroy(i);
+            
+            update_current_state_rr(&freequeue);
+            sched_next_rr();
+        }
+    }
+
     update_current_state_rr(&freequeue);
     sched_next_rr();
 }
@@ -303,6 +317,107 @@ int sys_get_stats(int pid, struct stats *st)
     if (copy_to_user(&(desired_pcb->statistics), st, sizeof(struct stats)) < 0) {
         update_stats(current(), RSYS_TO_RUSER);
         return -EPERM;
+    }
+
+    update_stats(current(), RSYS_TO_RUSER);
+    return 0;
+}
+
+int sys_sem_init(int n_sem, unsigned int value)
+{
+    update_stats(current(), RUSER_TO_RSYS);
+   
+    /* Check user parameters */
+    if (n_sem < 0 || n_sem >= NR_SEMS || sems[n_sem].owner_pid != -1) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EPERM;
+    }
+
+    sems[n_sem].owner_pid = current()->PID;
+    sems[n_sem].count = value;
+    INIT_LIST_HEAD(&(sems[n_sem].semqueue));
+
+    update_stats(current(), RSYS_TO_RUSER);
+    return 0;
+}
+
+int sys_sem_wait(int n_sem)
+{
+    update_stats(current(), RUSER_TO_RSYS);
+   
+    /* Check user parameters */
+    if (n_sem < 0 || n_sem >= NR_SEMS || sems[n_sem].owner_pid == -1) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EPERM;
+    }
+
+    if (sems[n_sem].count > 0) --sems[n_sem].count;
+    else {
+        struct list_head *semqueue = &(sems[n_sem].semqueue);
+        struct list_head *curr_task = &(current()->list);
+        list_del(curr_task);
+        current()->state = ST_BLOCKED;
+        list_add_tail(curr_task, semqueue);
+        update_stats(current(), RSYS_TO_BLOCKED);
+        sched_next_rr();
+    }
+
+    /* Assures that the semaphore was destroyed while the process is blocked */
+    if (sems[n_sem].owner_pid != -1) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EPERM;
+    }
+
+    update_stats(current(), RSYS_TO_RUSER);
+    return 0;
+}
+
+int sys_sem_signal(int n_sem)
+{
+    update_stats(current(), RUSER_TO_RSYS);
+   
+    /* Check user parameters */
+    if (n_sem < 0 || n_sem >= NR_SEMS || sems[n_sem].owner_pid == -1) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EPERM;
+    }
+    
+    struct list_head *semqueue = &(sems[n_sem].semqueue);
+
+    /* TODO: Is (sems[n_sem].count == 0) an equivalent checking? */
+    if (list_empty(semqueue)) ++sems[n_sem].count;
+    else {
+        struct list_head *elem = list_first(semqueue);
+        struct task_struct *unblocked = list_head_to_task_struct(elem);
+        list_del(elem);
+        unblocked->state = ST_READY;
+        list_add_tail(elem, &readyqueue);
+        update_stats(current(), BLOCKED_TO_RSYS);
+    }
+
+    update_stats(current(), RSYS_TO_RUSER);
+    return 0;
+}
+
+int sys_sem_destroy(int n_sem)
+{
+    update_stats(current(), RUSER_TO_RSYS);
+   
+    /* Check user parameters */
+    if (n_sem < 0 || n_sem >= NR_SEMS || sems[n_sem].owner_pid == -1 || sems[n_sem].owner_pid != current()->PID) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EPERM;
+    }
+
+    sems[n_sem].owner_pid = -1;
+    struct list_head *semqueue = &(sems[n_sem].semqueue);
+    while(!list_empty(semqueue)) {
+        struct list_head *elem = list_first(semqueue);
+        struct task_struct *unblocked = list_head_to_task_struct(elem);
+        list_del(elem);
+        unblocked->state = ST_READY;
+        list_add_tail(elem, &readyqueue);
+        update_stats(current(), BLOCKED_TO_RSYS);
     }
 
     update_stats(current(), RSYS_TO_RUSER);
