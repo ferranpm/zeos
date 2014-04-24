@@ -213,13 +213,13 @@ int sys_clone(void (*function) (void), void *stack)
     child->task.kernel_esp = &child->stack[stack_stride-1];
 
     /* Modifies ebp with the address of the new stack */
-    child->stack[stack_stride+6] = (unsigned long)stack;
+    child->stack[stack_stride+7] = (unsigned long)stack;
     
     /* Modifies eip with the address of the new code (function) to execute */
-    child->stack[stack_stride+12] = (unsigned long)function;
+    child->stack[stack_stride+13] = (unsigned long)function;
     
     /* Modifies esp with the address of the new stack */
-    child->stack[stack_stride+15] = (unsigned long)stack;
+    child->stack[stack_stride+16] = (unsigned long)stack;
 
     /* Adds child process to ready queue and returns its PID from parent */
     list_add_tail(&(pcb_child->list), &readyqueue);
