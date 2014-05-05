@@ -68,7 +68,8 @@ int allocate_DIR(struct task_struct *t)
 }
 */
 
-/* TODO: Debug it further (currently no works) */
+/* TODO: Debug it further (currently no works for test 15 of E2 tests suite) */
+
 int allocate_DIR(struct task_struct *t)
 {
     int pos;

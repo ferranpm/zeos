@@ -71,7 +71,7 @@ extern struct sem_t sems[NR_SEMS];
 
 /* Useful macro to manipulates directory pages references */
 #define POS_TO_DIR_PAGES_REFS(p_dir)                        \
-    (int)((p_dir - &dir_pages[0][0]) / (sizeof(dir_pages[0]))) \
+    (int)(((unsigned long)p_dir - (unsigned long)(&dir_pages[0][0])) / (sizeof(dir_pages[0]))) \
 
 /* Headers for the process management */
 struct task_struct * current();
