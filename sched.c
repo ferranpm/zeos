@@ -130,7 +130,11 @@ void init_idle (void)
     idle_task->state = ST_READY;
     init_stats(idle_task);
 
-    allocate_DIR(idle_task);
+    /* 
+     * Would be more suitable to call allocate_DIR here but this step
+     * is performed in init_mm to prevent the OS to reboot regard to 
+     * paging enabling process.
+     */
 
     union task_union *idle_task_stack = (union task_union *)idle_task;
     idle_task_stack->stack[KERNEL_STACK_SIZE-1] = (unsigned long)&cpu_idle;
