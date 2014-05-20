@@ -11,7 +11,7 @@ extern struct kbd_buff keyboard_buffer;
 
 void keyboard_buffer_init();
 int keyboard_buffer_push(unsigned char);
-unsigned char keyboard_buffer_pop();
+char keyboard_buffer_pop();
 
 #endif /* __KEYBOARD_H__ */
 

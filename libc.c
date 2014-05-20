@@ -232,17 +232,11 @@ int sem_destroy(int n_sem)
 }
 
 int read(int fd, char *buff, int count) {
-
+    // TODO: Check params
     int ret;
     __asm__ __volatile__(
         "int $0x80\n"
         : "=a" (ret)
         : "b" (fd), "c" (buff), "d" (count), "a" (30)
     );
-    /* int i; */
-    /* char a = keyboard_buffer_pop(); */
-    /* write(1, &a, 1); */
-    /* #<{(| for (i = 0; i < count; i++) { |)}># */
-    /* #<{(|     buff[i] = keyboard_buffer_pop(); |)}># */
-    /* #<{(| } |)}># */
 }

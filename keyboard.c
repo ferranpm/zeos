@@ -29,7 +29,7 @@ int keyboard_buffer_push(unsigned char key) {
         keyboard_buffer.b = 0;
 }
 
-unsigned char keyboard_buffer_pop() {
+char keyboard_buffer_pop() {
     if (keyboard_buffer.a == keyboard_buffer.b)
         return -1; // No hi ha re per llegir
     unsigned char c = keyboard_buffer.buff[keyboard_buffer.a];
@@ -55,7 +55,9 @@ int sys_read_keyboard(int fd, char *buff, int count) {
     /*     #<{(| unblock(keyboardqueue); |)}># */
     /* } */
 
-    printc_xy(10, 10, keyboard_buffer_pop());
+    char c = keyboard_buffer_pop();
+    if (c > 0)
+        printc_xy(10, 10, c);
     /* for (i = 0; i < read; i++) */
     /*     buff[i] = keyboard_buffer_pop(); */
 
