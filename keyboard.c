@@ -21,12 +21,12 @@ int keyboard_buffer_push(unsigned char key) {
         primera = 0;
         keyboard_buffer_init();
     }
-    if (bmu == keyboard_buffer.a) return -1; // Buffer ple
+    else if (bmu == keyboard_buffer.a) return -1; // Buffer ple
+
+    keyboard_buffer.buff[keyboard_buffer.b] = key;
 
     if (++keyboard_buffer.b > KEYBOARD_BUFF_SIZE)
         keyboard_buffer.b = 0;
-
-    keyboard_buffer.buff[keyboard_buffer.b] = key;
 }
 
 unsigned char keyboard_buffer_pop() {
