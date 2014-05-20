@@ -26,13 +26,13 @@ SYSLDFLAGS = -T system.lds
 USRLDFLAGS = -T user.lds
 LINKFLAGS = -g
 
-SYSOBJ = interrupt.o entry.o sys_call_table.o io.o sched.o sys.o mm.o devices.o utils.o hardware.o list.o
+SYSOBJ = interrupt.o entry.o sys_call_table.o io.o sched.o sys.o mm.o devices.o utils.o hardware.o list.o keyboard.o
 
 # Adds "-l auxjp" to perform test suite provided by lab course
 LIBZEOS = -L . -l zeos -l auxjp
 
 # add to USROBJ the object files required to complete the user program
-USROBJ = libc.o libjp.a # Comment libjp.a when it is not necessary
+USROBJ = libc.o #libjp.a # Comment libjp.a when it is not necessary
 
 all:zeos.bin
 
@@ -61,11 +61,13 @@ sys_call_table.s: sys_call_table.S $(INCLUDEDIR)/asm.h $(INCLUDEDIR)/segment.h
 
 user.o:user.c $(INCLUDEDIR)/libc.h
 
-interrupt.o:interrupt.c $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/segment.h $(INCLUDEDIR)/types.h
+interrupt.o:interrupt.c $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/segment.h $(INCLUDEDIR)/types.h $(INCLUDEDIR)/keyboard.h
 
 io.o:io.c $(INCLUDEDIR)/io.h
 
 sched.o:sched.c $(INCLUDEDIR)/sched.h
+
+keyboard.o: keyboard.c $(INCLUDEDIR)/keyboard.h
 
 libc.o:libc.c $(INCLUDEDIR)/libc.h
 

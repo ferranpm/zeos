@@ -24,6 +24,7 @@ struct task_struct *list_head_to_task_struct(struct list_head *l)
 
 struct list_head freequeue;
 struct list_head readyqueue;
+struct list_head keyboardqueue;
 
 struct task_struct *idle_task;
 
@@ -367,3 +368,22 @@ void update_stats_rsys_to_blocked(struct task_struct *pcb)
     pcb->statistics.elapsed_total_ticks = get_ticks();
 }
 
+void block(struct list_head *dst_queue) {
+    /* Updates the state of current process */
+    struct task_struct *pcb_curr_task = current();
+    if (dst_queue == &freequeue) pcb_curr_task->state = ST_FREE;
+    else if (dst_queue == &readyqueue) pcb_curr_task->state = ST_READY;
+    else pcb_curr_task->state = ST_BLOCKED;
+
+    /* Removes current process from its current queue and put it to dst_queue
+     * only if the current process is not the idle process and it's not the only
+     * available process which status is ready.
+     */
+    if ((pcb_curr_task != idle_task) & (!list_empty(&readyqueue))) {
+        list_del(&(pcb_curr_task->list));
+        list_add_tail(&(pcb_curr_task->list), dst_queue);
+    }
+}
+
+void unblock(struct list_head *queue) {
+}

@@ -10,6 +10,9 @@
 #include <sched.h>
 #include <zeos_interrupt.h>
 
+// TODO: SURE??
+#include <keyboard.h>
+
 Gate idt[IDT_ENTRIES];
 Register    idtR;
 
@@ -102,7 +105,8 @@ void keyboard_routine()
         if (key == '\0') key = 'C';
 
         /* Arbitrary position where prints the key on screen */
-        printc_xy(10, 20, key);
+        /* printc_xy(10, 20, key); */
+        keyboard_buffer_push(key);
     }
     update_stats(current(), RSYS_TO_RUSER);
 }

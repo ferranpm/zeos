@@ -94,7 +94,7 @@ int __attribute__((__section__(".text.main")))
   copy_data((void *) KERNEL_START + *p_sys_size, usr_main, *p_usr_size);
 
   /* Adds this call in order to perform test suite provided by lab course */
-  zeos_init_auxjp();
+  /* zeos_init_auxjp(); */
 
   printk("Entering user mode...");
 

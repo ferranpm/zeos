@@ -6,6 +6,8 @@
 #include <types.h>
 #include <errno.h>
 
+#include <keyboard.h>
+
 /* Useful macro to set errno and return expected value from each system call */
 #define SET_ERRNO_RETURN                     \
     int mask = ret >> 31;                    \
@@ -229,3 +231,18 @@ int sem_destroy(int n_sem)
     SET_ERRNO_RETURN
 }
 
+int read(int fd, char *buff, int count) {
+
+    int ret;
+    __asm__ __volatile__(
+        "int $0x80\n"
+        : "=a" (ret)
+        : "b" (fd), "c" (buff), "d" (count), "a" (30)
+    );
+    /* int i; */
+    /* char a = keyboard_buffer_pop(); */
+    /* write(1, &a, 1); */
+    /* #<{(| for (i = 0; i < count; i++) { |)}># */
+    /* #<{(|     buff[i] = keyboard_buffer_pop(); |)}># */
+    /* #<{(| } |)}># */
+}

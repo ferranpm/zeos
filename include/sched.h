@@ -105,5 +105,8 @@ void update_stats_ready_to_rsys(struct task_struct *pcb);
 void update_stats_blocked_to_rsys(struct task_struct *pcb);
 void update_stats_rsys_to_blocked(struct task_struct *pcb);
 
+void block(struct list_head *);
+void unblock(struct list_head *);
+
 #endif  /* __SCHED_H__ */
 
