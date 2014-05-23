@@ -32,7 +32,7 @@ ENTRY (sys_call_table)
     .long sys_ni_syscall
     .long sys_ni_syscall
     .long sys_ni_syscall
-    .long sys_read_keyboard /* 30 */
+    .long sys_read       /* 30 */
     .long sys_ni_syscall
     .long sys_ni_syscall
     .long sys_ni_syscall

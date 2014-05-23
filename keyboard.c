@@ -1,27 +1,32 @@
 #include <keyboard.h>
+#include <errno.h>
+#include <utils.h>
+
+#include <sched.h>
 
 struct kbd_buff keyboard_buffer;
-int primera = 1;
+int remainder_chars;
 
 void keyboard_buffer_init() {
     keyboard_buffer.a = 0;
     keyboard_buffer.b = 0;
+    remainder_chars = 0;
 }
 
-int keyboard_buffer_size() {
+int keyboard_buffer_avail() {
     if (keyboard_buffer.a < keyboard_buffer.b)
         return (keyboard_buffer.b - keyboard_buffer.a);
     return (KEYBOARD_BUFF_SIZE - keyboard_buffer.a - keyboard_buffer.b);
 }
 
+int keyboard_buffer_full() {
+    return keyboard_buffer_avail() == KEYBOARD_BUFF_SIZE;
+}
+
 // Returns -1 if the buffer is full
 int keyboard_buffer_push(unsigned char key) {
-    int bmu = keyboard_buffer.b + 1 >= KEYBOARD_BUFF_SIZE? 0 : keyboard_buffer.b + 1;
-    if (primera) {
-        primera = 0;
-        keyboard_buffer_init();
-    }
-    else if (bmu == keyboard_buffer.a) return -1; // Buffer ple
+    int bmu = (keyboard_buffer.b + 1)%KEYBOARD_BUFF_SIZE;
+    if (bmu == keyboard_buffer.a) return -1; // Buffer ple
 
     keyboard_buffer.buff[keyboard_buffer.b] = key;
 
@@ -38,28 +43,27 @@ char keyboard_buffer_pop() {
     return c;
 }
 
-int sys_read_keyboard(int fd, char *buff, int count) {
-
+int sys_read_keyboard(char *buff, int count) {
     int i;
-    // TODO: CHECK PARAMS!!!
-
-    /* int available = keyboard_buffer_size(); */
     int read;
-    /* if (count < available) read = count; */
-    /* // If the buffer is full and count is greater */
-    /* // than the buffer size, read all the buffer */
-    /* else if (available >= KEYBOARD_BUFF_SIZE-1 && count > available) */
-    /*     read = KEYBOARD_BUFF_SIZE - 1; */
-    /* else { */
-    /*     #<{(| block(keyboardqueue); |)}># */
-    /*     #<{(| unblock(keyboardqueue); |)}># */
-    /* } */
+    char available = keyboard_buffer_avail();
+    int pos = 0;
 
-    char c = keyboard_buffer_pop();
-    if (c > 0)
-        printc_xy(10, 10, c);
-    /* for (i = 0; i < read; i++) */
-    /*     buff[i] = keyboard_buffer_pop(); */
+    if (!list_empty(&keyboardqueue)) block();
 
-    return read;
+    if (count > available) {
+        if (available == KEYBOARD_BUFF_SIZE) {
+            for (i = pos; i < available; i++)
+                buff[i] = keyboard_buffer_pop();
+            pos = available;
+            count -= available;
+            remainder_chars = count;
+        }
+        block();
+    }
+
+    for (i = pos; i < count; i++)
+        buff[i] = keyboard_buffer_pop();
+
+    return pos + count;
 }

@@ -10,6 +10,8 @@
 #include <sched.h>
 #include <errno.h>
 
+#include <keyboard.h>
+
 #define LECTURA 0
 #define ESCRIPTURA 1
 #define BUFFER_SIZE 256
@@ -524,5 +526,13 @@ int sys_gettime()
     update_stats(current(), RUSER_TO_RSYS);
     update_stats(current(), RSYS_TO_RUSER);
     return zeos_ticks;
+}
+
+int sys_read(int fd, char *buff, int count) {
+    // TODO: CHECK PARAMS
+    /* if ((ret = kb_check_fd(fd, ESCRIPTURA) != 0)) return ret; */
+    /* if ((ret = access_ok(VERIFY_WRITE, buff, count)) == 0) return ret; */
+    if (count < 0) return -1;
+    return sys_read_keyboard(buff, count);
 }
 

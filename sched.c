@@ -118,6 +118,11 @@ void init_readyqueue()
     INIT_LIST_HEAD(&readyqueue);
 }
 
+void init_keyboardqueue()
+{
+    INIT_LIST_HEAD(&keyboardqueue);
+}
+
 void init_idle (void)
 {
     struct list_head *first = list_first(&freequeue);
@@ -187,6 +192,7 @@ void init_sched()
     /* Initializes required structures to perform the process scheduling */
     init_freequeue();
     init_readyqueue();
+    init_keyboardqueue();
 
     /* Initializes array of semaphores */
     init_sems();
@@ -368,22 +374,31 @@ void update_stats_rsys_to_blocked(struct task_struct *pcb)
     pcb->statistics.elapsed_total_ticks = get_ticks();
 }
 
-void block(struct list_head *dst_queue) {
+void block() {
     /* Updates the state of current process */
     struct task_struct *pcb_curr_task = current();
-    if (dst_queue == &freequeue) pcb_curr_task->state = ST_FREE;
-    else if (dst_queue == &readyqueue) pcb_curr_task->state = ST_READY;
-    else pcb_curr_task->state = ST_BLOCKED;
+    pcb_curr_task->state = ST_BLOCKED;
 
     /* Removes current process from its current queue and put it to dst_queue
      * only if the current process is not the idle process and it's not the only
      * available process which status is ready.
      */
-    if ((pcb_curr_task != idle_task) & (!list_empty(&readyqueue))) {
-        list_del(&(pcb_curr_task->list));
-        list_add_tail(&(pcb_curr_task->list), dst_queue);
-    }
+    /* if ((pcb_curr_task != idle_task) & (!list_empty(&readyqueue))) { */
+    /*     list_del(&(pcb_curr_task->list)); */
+    /*     list_add_tail(&(pcb_curr_task->list), &keyboardqueue); */
+    /* } */
+    update_current_state_rr(&keyboardqueue);
+    sched_next_rr();
 }
 
-void unblock(struct list_head *queue) {
+void unblock() {
+    struct list_head *head_first = list_first(&keyboardqueue);
+    struct task_struct *task_first = list_head_to_task_struct(head_first);
+
+    task_first->state = ST_READY;
+
+    // TODO: REVISAR AIXO
+    list_del(&(task_first->list));
+    list_add_tail(head_first, &readyqueue);
+    sched_next_rr();
 }

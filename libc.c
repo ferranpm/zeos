@@ -232,7 +232,6 @@ int sem_destroy(int n_sem)
 }
 
 int read(int fd, char *buff, int count) {
-    // TODO: Check params
     int ret;
     __asm__ __volatile__(
         "int $0x80\n"

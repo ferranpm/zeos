@@ -10,7 +10,6 @@
 #include <sched.h>
 #include <zeos_interrupt.h>
 
-// TODO: SURE??
 #include <keyboard.h>
 
 Gate idt[IDT_ENTRIES];
@@ -106,7 +105,12 @@ void keyboard_routine()
 
         /* Arbitrary position where prints the key on screen */
         /* printc_xy(10, 20, key); */
-        keyboard_buffer_push(key);
+        if (!keyboard_buffer_full()) {
+            keyboard_buffer_push(key);
+            if (keyboard_buffer_avail() >= remainder_chars) 
+                unblock();
+        }
+        else unblock();
     }
     update_stats(current(), RSYS_TO_RUSER);
 }

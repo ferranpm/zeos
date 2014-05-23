@@ -43,6 +43,7 @@ extern int next_free_pid;               /* Next available PID to assign */
 /* Structures needed to implement process management */
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
+extern struct list_head keyboardqueue;
 
 /* TODO: Would be better to define this in include/mm.h and using
  * __attribute__((__section__(".data.task"))); ?
@@ -105,8 +106,8 @@ void update_stats_ready_to_rsys(struct task_struct *pcb);
 void update_stats_blocked_to_rsys(struct task_struct *pcb);
 void update_stats_rsys_to_blocked(struct task_struct *pcb);
 
-void block(struct list_head *);
-void unblock(struct list_head *);
+void block();
+void unblock();
 
 #endif  /* __SCHED_H__ */
 
