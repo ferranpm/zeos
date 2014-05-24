@@ -238,4 +238,15 @@ int read(int fd, char *buff, int count) {
         : "=a" (ret)
         : "b" (fd), "c" (buff), "d" (count), "a" (30)
     );
+    SET_ERRNO_RETURN
+}
+
+void *sbrk(int increment) {
+    int ret;
+    __asm__ __volatile__(
+        "int $0x80\n"
+        : "=a" (ret)
+        : "b" (increment), "a" (15)
+    );
+    SET_ERRNO_RETURN
 }

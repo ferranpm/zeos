@@ -26,6 +26,8 @@ struct task_struct {
     page_table_entry * dir_pages_baseAddr; /* Directory base address */
     int quantum;
     unsigned long *kernel_esp;
+    unsigned long *heap_start;
+    unsigned long *heap_break;
     enum state_t state;
     struct stats statistics;
     struct list_head list;

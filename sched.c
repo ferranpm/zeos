@@ -171,6 +171,11 @@ void init_task1(void)
 
     set_cr3(get_DIR(pcb_init_task));
 
+    /* pcb_init_task->heap_start = pcb_init_task->dir_pages_baseAddr + NUM_PAG_DATA*PAGE_SIZE + NUM_PAG_CODE*PAGE_SIZE; */
+    pcb_init_task->heap_start = PAG_LOG_INIT_DATA_P0 + NUM_PAG_DATA * PAGE_SIZE;
+    pcb_init_task->heap_break = pcb_init_task->heap_start;
+
+
     /* Must be added at readyqueue since this will become the first process
      * to be executed by the CPU
      */

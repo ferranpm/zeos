@@ -17,7 +17,7 @@ ENTRY (sys_call_table)
     .long sys_ni_syscall
     .long sys_ni_syscall
     .long sys_ni_syscall
-    .long sys_ni_syscall /* 15 */
+    .long sys_sbrk /* 15 */
     .long sys_ni_syscall
     .long sys_ni_syscall
     .long sys_ni_syscall

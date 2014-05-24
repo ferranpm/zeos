@@ -16,17 +16,14 @@ int __attribute__ ((__section__(".text.main"))) main(void)
         while (1);
     }
     else {
-        while (1) {
-            write(1, "\nnew\n", 5);
-            for (i = 0; i < 9999; i++)
-                for (j = 0; j < 199; j++);
-            read(1, buff, 1);
-            write(1, buff, 1);
-            /* write(1, "Direct: ", 8); */
-            /* write(1, keyboard_buffer.buff, 10); */
-            /* write(1, "Read: ", 6); */
-            /* write(1, buff, sizeof(buff)); */
-        }
+        void *a = sbrk(0);
+        a = sbrk(0);
+        a = sbrk(0);
+        a = sbrk(0);
+        int *b = (int*)sbrk(500);
+        write(1, "x", 1);
+        b[8] = 0;
+        while(1);
     }
 
     return 0;

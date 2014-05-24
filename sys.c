@@ -121,6 +121,19 @@ int sys_fork()
         del_ss_pag(pagt_parent, i + PAG_LOG_INIT_DATA_P0 + NUM_PAG_DATA);
     }
 
+    int NUM_PAG_HEAP = (pcb_parent->heap_break - pcb_parent->heap_start)/PAGE_SIZE;
+    int resv_heap[NUM_PAG_HEAP];
+    for (i = 0; i < NUM_PAG_HEAP; i++) {
+        /* Associates a logical page from child's page table to physical reserved frame */
+        set_ss_pag(pagt_child, pcb_child->heap_start+i, resv_heap[i]);
+
+        /* Inherits one page of user data */
+        unsigned int logic_addr = pcb_child->heap_start + (i * PAGE_SIZE);
+        set_ss_pag(pagt_parent, i + pcb_child->heap_start + NUM_PAG_HEAP, resv_heap[i]);
+        copy_data((void *)(logic_addr), (void *)(logic_addr + stride), PAGE_SIZE);
+        del_ss_pag(pagt_parent, i + pcb_child->heap_start + NUM_PAG_HEAP);
+    }
+
     /* Flushes entire TLB */
     set_cr3(get_DIR(pcb_parent));
 
@@ -529,10 +542,53 @@ int sys_gettime()
 }
 
 int sys_read(int fd, char *buff, int count) {
+    update_stats(current(), RUSER_TO_RSYS);
     // TODO: CHECK PARAMS
     /* if ((ret = kb_check_fd(fd, ESCRIPTURA) != 0)) return ret; */
     /* if ((ret = access_ok(VERIFY_WRITE, buff, count)) == 0) return ret; */
     if (count < 0) return -1;
+    update_stats(current(), RSYS_TO_RUSER);
     return sys_read_keyboard(buff, count);
 }
 
+void *sys_sbrk(int increment) {
+    update_stats(current(), RUSER_TO_RSYS);
+    struct task_struct *current_task = current();
+    void *ret = current_task->heap_break;
+    int i;
+
+    if (increment <= 0) return current_task->heap_break;
+
+    page_table_entry* current_page = get_PT(current_task);
+
+    /* Reserve free frames (physical memory) to allocate child's user data */
+    int NUM_PAG_HEAP = increment/PAGE_SIZE + 1;
+    int resv_frames[NUM_PAG_HEAP];
+
+    for (i = 0; i < NUM_PAG_HEAP; i++) {
+
+        /* If there is no enough free frames, those reserved thus far must be freed */
+        if ((resv_frames[i] = alloc_frame()) == -1) {
+            while (i >= 0) free_frame(resv_frames[i--]);
+            return -ENOMEM;
+        }
+    }
+
+    printc_xy(1,1,'a');
+    for (i = 0; i < NUM_PAG_HEAP; i++) {
+        printc_xy(1,1,'z');
+        unsigned int logic_addr = (i + (unsigned long)current_task->heap_break) * PAGE_SIZE;
+        set_ss_pag(current_page, (void *)logic_addr, resv_frames[i]);
+    }
+    /* for (i = current_task->heap_break; i < current_task->heap_break + increment; i++) { */
+    /*     set_ss_pag(current_page, i, resv_frames[i-(unsigned long)current_task->heap_start]); */
+    /*     #<{(| int x = i - current_task->heap_break; |)}># */
+    /*     #<{(| set_ss_pag(current_page, i, get_frame(current_page, x)); |)}># */
+    /* } */
+    printc_xy(1,1,'b');
+
+    current_task->heap_break += increment;
+
+    update_stats(current(), RSYS_TO_RUSER);
+    return ret;
+}
