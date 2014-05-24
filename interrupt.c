@@ -106,11 +106,21 @@ void keyboard_routine()
         /* Arbitrary position where prints the key on screen */
         /* printc_xy(10, 20, key); */
         if (!keyboard_buffer_full()) {
+            /* printc_xy(10, 10, 'a'); */
             keyboard_buffer_push(key);
-            if (keyboard_buffer_avail() >= remainder_chars) 
-                unblock();
+            /* printc_xy(10, 10, 'b'); */
+            if (keyboard_buffer_avail() >= remainder_chars) {
+                /* printc_xy(10, 10, 'c'); */
+                if (!list_empty(&keyboardqueue)) {
+                    /* printc_xy(10, 10, 'd'); */
+                    unblock();
+                }
+            }
         }
-        else unblock();
+        else if (!list_empty(&keyboardqueue)) {
+            /* printc_xy(1,1,'e'); */
+            unblock();
+        }
     }
     update_stats(current(), RSYS_TO_RUSER);
 }

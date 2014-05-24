@@ -398,7 +398,11 @@ void unblock() {
     task_first->state = ST_READY;
 
     // TODO: REVISAR AIXO
-    list_del(&(task_first->list));
+    list_del(head_first);
     list_add_tail(head_first, &readyqueue);
+
+    /* if (list_empty(&keyboardqueue)) printc_xy(1,1,'T'); */
+    /* else printc_xy(1,1,'Y'); */
+
     sched_next_rr();
 }
