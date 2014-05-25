@@ -9,6 +9,7 @@
 #include <entry.h>
 #include <sched.h>
 #include <zeos_interrupt.h>
+#include <keyboard.h>
 
 Gate idt[IDT_ENTRIES];
 Register    idtR;
@@ -99,10 +100,32 @@ void keyboard_routine()
     unsigned char key = inb(0x60);
     if (key < 0x80) {
         key = char_map[key];
-        if (key == '\0') key = 'C';
 
-        /* Arbitrary position where prints the key on screen */
-        printc_xy(10, 20, key);
+        /* TODO: Is it needed? */
+        /* if (key == '\0') key = 'C'; */
+
+        int avail_keys = keyboard_buffer_avail();
+        if (avail_keys < KBD_BUFFER_SIZE) {
+            push_keyboard_buff(key);
+            avail_keys = keyboard_buffer_avail();
+        }
+        //printk("Tecles premudes: ");
+        //printc_xy(10, 10, avail_keys + '0');
+        if (!list_empty(&keyboardqueue)) {
+            struct list_head *first = list_first(&keyboardqueue);
+            struct task_struct *task_to_unblock = list_head_to_task_struct(first);
+            int last_read_req = task_to_unblock->remainder_reads;
+            if (last_read_req <= avail_keys || avail_keys == KBD_BUFFER_SIZE) {
+                unblock_from_keyboardqueue();
+                /* TODO: When unblocks the process, do we add it at the end or
+                 * start of readyqueue?
+                 */
+                
+                /* TODO: After unblocks the process, must we perform a
+                 * sched_next_rr()?
+                 */
+            }
+        }
     }
     update_stats(current(), RSYS_TO_RUSER);
 }

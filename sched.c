@@ -24,6 +24,7 @@ struct task_struct *list_head_to_task_struct(struct list_head *l)
 
 struct list_head freequeue;
 struct list_head readyqueue;
+struct list_head keyboardqueue;
 
 struct task_struct *idle_task;
 
@@ -117,6 +118,11 @@ void init_readyqueue()
     INIT_LIST_HEAD(&readyqueue);
 }
 
+void init_keyboardqueue()
+{
+    INIT_LIST_HEAD(&keyboardqueue);
+}
+
 void init_idle (void)
 {
     struct list_head *first = list_first(&freequeue);
@@ -130,11 +136,7 @@ void init_idle (void)
     idle_task->state = ST_READY;
     init_stats(idle_task);
 
-    /* 
-     * Would be more suitable to call allocate_DIR here but this step
-     * is performed in init_mm to prevent the OS to reboot regard to 
-     * paging enabling process.
-     */
+    allocate_DIR(idle_task);
 
     union task_union *idle_task_stack = (union task_union *)idle_task;
     idle_task_stack->stack[KERNEL_STACK_SIZE-1] = (unsigned long)&cpu_idle;
@@ -154,6 +156,7 @@ void init_task1(void)
     /* Its PID always is defiend as 1 */
     pcb_init_task->PID = 1;
 
+    pcb_init_task->remainder_reads = 0;
     set_quantum(pcb_init_task, DEFAULT_QUANTUM);
     pcb_init_task->state = ST_READY;
     init_stats(pcb_init_task);
@@ -186,6 +189,7 @@ void init_sched()
     /* Initializes required structures to perform the process scheduling */
     init_freequeue();
     init_readyqueue();
+    init_keyboardqueue();
 
     /* Initializes array of semaphores */
     init_sems();
@@ -288,6 +292,38 @@ void sched_next_rr()
         update_stats(pcb_next_task, READY_TO_RSYS);
         task_switch((union task_union *)pcb_next_task);
     }
+}
+
+/* endpoint determines if the current process will block at the beginning
+ * of the keyboardqueue (0) or at the end (1)
+ */
+void block_to_keyboardqueue(int endpoint) {
+
+    /* Blocks the current process at the end of the keyboardqueue */
+    if (endpoint == 1) {
+        update_current_state_rr(&keyboardqueue);
+    }
+    
+    /* Blocks the current process at the beginning of the keyboardqueue */
+    else {
+        struct task_struct *pcb_curr_task = current();
+        pcb_curr_task->state = ST_BLOCKED;
+        if ((pcb_curr_task != idle_task) & (!list_empty(&readyqueue))) {
+            list_del(&(pcb_curr_task->list));
+            list_add(&(pcb_curr_task->list), &keyboardqueue);
+        }
+    }
+    sched_next_rr();
+}
+
+void unblock_from_keyboardqueue() {
+    struct list_head *first = list_first(&keyboardqueue);
+    struct task_struct *task_first = list_head_to_task_struct(first);
+
+    task_first->state = ST_READY;
+    list_del(first);
+    list_add_tail(first, &readyqueue);
+    sched_next_rr();
 }
 
 void init_stats(struct task_struct *pcb)

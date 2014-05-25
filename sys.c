@@ -9,6 +9,7 @@
 #include <mm_address.h>
 #include <sched.h>
 #include <errno.h>
+#include <keyboard.h>
 
 #define LECTURA 0
 #define ESCRIPTURA 1
@@ -123,9 +124,11 @@ int sys_fork()
     set_cr3(get_DIR(pcb_parent));
 
     /* Updates child's PCB (only the ones that the child process does not inherit) */
+    /* TODO: Are remainder_reads inherit from parent, or are private per process? */
     PID = new_pid();
     pcb_child->PID = PID;
     pcb_child->state = ST_READY;
+    pcb_child->remainder_reads = 0;
     init_stats(pcb_child);
 
     /* Prepares the return of child process. It must return 0
@@ -524,5 +527,30 @@ int sys_gettime()
     update_stats(current(), RUSER_TO_RSYS);
     update_stats(current(), RSYS_TO_RUSER);
     return zeos_ticks;
+}
+
+int sys_read(int fd, char *buff, int count)
+{
+    update_stats(current(), RUSER_TO_RSYS);
+
+    /* Check user parameters */
+    int err = check_fd(fd, ESCRIPTURA);
+    if (err < 0) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return err;
+    }
+    if (count < 0) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EINVAL;
+    }
+    
+    /* Checks if buffer pointer points to a valid user space address */
+    if (buff == NULL || !access_ok(VERIFY_WRITE, buff, count)) {
+        update_stats(current(), RSYS_TO_RUSER);
+        return -EFAULT;
+    }
+
+    /* Calls the device-dependent read sys_read_keyboard */
+    return sys_read_keyboard(buff, count);
 }
 

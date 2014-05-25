@@ -25,6 +25,7 @@ struct task_struct {
     int PID;                               /* Process ID */
     page_table_entry * dir_pages_baseAddr; /* Directory base address */
     int quantum;
+    unsigned int remainder_reads;
     unsigned long *kernel_esp;
     enum state_t state;
     struct stats statistics;
@@ -43,6 +44,7 @@ extern int next_free_pid;               /* Next available PID to assign */
 /* Structures needed to implement process management */
 extern struct list_head freequeue;
 extern struct list_head readyqueue;
+extern struct list_head keyboardqueue;
 
 /* TODO: Would be better to define this in include/mm.h and using
  * __attribute__((__section__(".data.task"))); ?
@@ -78,6 +80,7 @@ struct task_struct * current();
 struct task_struct *list_head_to_task_struct(struct list_head *l);
 void init_freequeue(void);
 void init_readyqueue(void);
+void init_keyboardqueue(void);
 void init_task1(void);
 void init_idle(void);
 void init_sched(void);
@@ -94,6 +97,8 @@ void sched_next_rr();
 void update_current_state_rr(struct list_head *dst_queue);
 int needs_sched_rr();
 void update_sched_data_rr();
+void block_to_keyboardqueue(int endpoint);
+void unblock_from_keyboardqueue();
 
 /* Headers for the process statistics */
 void init_stats(struct task_struct *pcb);

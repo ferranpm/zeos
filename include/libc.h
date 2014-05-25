@@ -24,6 +24,7 @@ int sem_init(int n_sem, unsigned int value);
 int sem_wait(int n_sem);
 int sem_signal(int n_sem);
 int sem_destroy(int n_sem);
+int read(int fd, char *buff, int count);
 
 #endif  /* __LIBC_H__ */
 
