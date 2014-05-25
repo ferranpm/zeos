@@ -229,3 +229,21 @@ int sem_destroy(int n_sem)
     SET_ERRNO_RETURN
 }
 
+/* Wrapper for the system call sys_read(int fd, char *buff, int conunt).
+ * It has got the entry 30 (0x1E) in the system call table
+ *
+ * TODO: iAs the lab manual does not specify nothing, can we use the 30th
+ * entry from sys_call_table to map sys_read?
+ */
+int read(int fd, char *buff, int count)
+{
+    int ret;
+    __asm__ __volatile__(
+        "int $0x80\n"
+        : "=a" (ret)
+        : "b" (fd), "c" (buff), "d" (count), "a" (0x1E)
+    );
+
+    SET_ERRNO_RETURN
+}
+
