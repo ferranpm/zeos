@@ -534,18 +534,19 @@ int sys_read(int fd, char *buff, int count)
     update_stats(current(), RUSER_TO_RSYS);
 
     /* Check user parameters */
-    int err = check_fd(fd, ESCRIPTURA);
-    if (err < 0) {
+    int err = check_fd(fd, ESCRIPTURA) | check_fd(fd, LECTURA);
+    if (err < 0 & fd != 0) {
         update_stats(current(), RSYS_TO_RUSER);
-        return err;
+        return -EBADF;
     }
+    
     if (count < 0) {
         update_stats(current(), RSYS_TO_RUSER);
         return -EINVAL;
     }
     
     /* Checks if buffer pointer points to a valid user space address */
-    if (buff == NULL || !access_ok(VERIFY_WRITE, buff, count)) {
+    if (buff == NULL | !access_ok(VERIFY_WRITE, buff, count)) {
         update_stats(current(), RSYS_TO_RUSER);
         return -EFAULT;
     }
