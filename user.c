@@ -6,9 +6,9 @@ int pid;
 int __attribute__ ((__section__(".text.main"))) main(void)
 {
     /* Run a test suite provided by lab course */
-    /* runjp(); */
+    runjp_rank(0,10);
 
-    unsigned char buff[10];
+    /*unsigned char buff[10];
     int i, j, k;
     int pid = fork();
 
@@ -24,8 +24,10 @@ int __attribute__ ((__section__(".text.main"))) main(void)
             write(1, "UEUE\n", 5);
             write(1, buff, 10);
         }
-    }
+    }*/
 
+    while(1);
+    
     return 0;
 }
 
