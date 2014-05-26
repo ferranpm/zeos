@@ -10,6 +10,7 @@
 #define NUM_PAG_CODE 8
 #define PAG_LOG_INIT_DATA_P0 (PAG_LOG_INIT_CODE_P0+NUM_PAG_CODE)
 #define NUM_PAG_DATA 20
+#define HEAPSTART (PAG_LOG_INIT_DATA_P0 + 2*NUM_PAG_DATA)
 #define PAGE_SIZE 0x1000
 
 /* Memory distribution */

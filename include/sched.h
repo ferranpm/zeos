@@ -27,6 +27,7 @@ struct task_struct {
     int quantum;
     unsigned int remainder_reads;
     unsigned long *kernel_esp;
+    char *heap_break;
     enum state_t state;
     struct stats statistics;
     struct list_head list;
