@@ -25,6 +25,7 @@ int sem_wait(int n_sem);
 int sem_signal(int n_sem);
 int sem_destroy(int n_sem);
 int read(int fd, char *buff, int count);
+void *sbrk(int increment);
 
 #endif  /* __LIBC_H__ */
 

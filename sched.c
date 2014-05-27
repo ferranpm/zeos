@@ -158,6 +158,7 @@ void init_task1(void)
 
     pcb_init_task->remainder_reads = 0;
     set_quantum(pcb_init_task, DEFAULT_QUANTUM);
+    pcb_init_task->heap_break = (unsigned long *)(HEAPSTART * PAGE_SIZE);
     pcb_init_task->state = ST_READY;
     init_stats(pcb_init_task);
 
