@@ -74,7 +74,7 @@ int sys_fork()
 
     /* Allocates new page directory for child process */
     allocate_DIR(pcb_child);
-    
+
     page_table_entry* pagt_child = get_PT(pcb_child);
     page_table_entry* pagt_parent = get_PT(pcb_parent);
 
@@ -102,7 +102,7 @@ int sys_fork()
 
     /* Inherits user data. Since each process has its own copy allocated in physical
      * memory, it's needed to copy the user data from parent process to the news
-     * reserved frames. First the page table entries from child process must be 
+     * reserved frames. First the page table entries from child process must be
      * associated to the new reserved frames. Then the user copy data is performed by
      * modifying the logical adress space of the parent to points to reserved frames,
      * then makes the copy of data, and finally deletes these new entries of parent's
@@ -141,7 +141,7 @@ int sys_fork()
 
     /* Inherits heap region. Since each process has its own copy allocated in physical
      * memory, it's needed to copy the heap region from parent process to the news
-     * reserved frames. First the page table entries from child process must be 
+     * reserved frames. First the page table entries from child process must be
      * associated to the new reserved frames. Then the heap region copy is performed by
      * modifying the logical adress space of the parent to points to reserved frames,
      * then makes the copy of data, and finally deletes these new entries of parent's
@@ -207,7 +207,7 @@ int sys_clone(void (*function) (void), void *stack)
 
     /* Checks user parameters */
     /* TODO: How we have to check the size of the user parameters for access_ok()? */
-    if (!access_ok(VERIFY_READ, function, sizeof(function)) || !access_ok(VERIFY_WRITE, stack, sizeof(stack))) { 
+    if (!access_ok(VERIFY_READ, function, sizeof(function)) || !access_ok(VERIFY_WRITE, stack, sizeof(stack))) {
         update_stats(current(), RSYS_TO_RUSER);
         return -EFAULT;
     }
@@ -231,7 +231,7 @@ int sys_clone(void (*function) (void), void *stack)
 
     /* Updates references for child's page directory, inherited by parent */
     update_DIR_refs(pcb_child);
-    
+
     /* Updates child's PCB (only the ones that the child process does not inherit) */
     PID = new_pid();
     pcb_child->PID = PID;
@@ -257,15 +257,15 @@ int sys_clone(void (*function) (void), void *stack)
 
     /* TODO: Is it necessary with sys_clone? */
     child->stack[stack_stride] = (unsigned long)&ret_from_fork;
-    
+
     child->task.kernel_esp = &child->stack[stack_stride-1];
 
     /* Modifies ebp with the address of the new stack */
     child->stack[stack_stride+7] = (unsigned long)stack;
-    
+
     /* Modifies eip with the address of the new code (function) to execute */
     child->stack[stack_stride+13] = (unsigned long)function;
-    
+
     /* Modifies esp with the address of the new stack */
     child->stack[stack_stride+16] = (unsigned long)stack;
 
@@ -288,7 +288,7 @@ void sys_exit()
     /* To detroy the process, it's needed to free all resources of the process
      * and schedules the next task to be executed by the CPU
      */
-    
+
     /* TODO: Modifies the compare statement to "== 0" */
     if (--dir_pages_refs[POS_TO_DIR_PAGES_REFS(get_DIR(current()))] <= 0) {
         free_user_pages(current());
@@ -298,7 +298,7 @@ void sys_exit()
     int i;
     for (i = 0; i < NR_SEMS; i++) {
         if (sems[i].owner_pid == current()->PID) {
-            
+
             /* TODO: What happens if sem_destroy returns error? */
             sys_sem_destroy(i);
         }
@@ -372,7 +372,7 @@ int sys_get_stats(int pid, struct stats *st)
 int sys_sem_init(int n_sem, unsigned int value)
 {
     update_stats(current(), RUSER_TO_RSYS);
-   
+
     /* Check user parameters */
     if (n_sem < 0 || n_sem >= NR_SEMS) {
         update_stats(current(), RSYS_TO_RUSER);
@@ -383,7 +383,7 @@ int sys_sem_init(int n_sem, unsigned int value)
         update_stats(current(), RSYS_TO_RUSER);
         return -EBUSY;
     }
-        
+
     sems[n_sem].owner_pid = current()->PID;
     sems[n_sem].count = value;
     INIT_LIST_HEAD(&(sems[n_sem].semqueue));
@@ -395,7 +395,7 @@ int sys_sem_init(int n_sem, unsigned int value)
 int sys_sem_wait(int n_sem)
 {
     update_stats(current(), RUSER_TO_RSYS);
-   
+
     /* Check user parameters */
     if (n_sem < 0 || n_sem >= NR_SEMS || sems[n_sem].owner_pid == -1) {
         update_stats(current(), RSYS_TO_RUSER);
@@ -429,13 +429,13 @@ int sys_sem_wait(int n_sem)
 int sys_sem_signal(int n_sem)
 {
     update_stats(current(), RUSER_TO_RSYS);
-   
+
     /* Check user parameters */
     if (n_sem < 0 || n_sem >= NR_SEMS || sems[n_sem].owner_pid == -1) {
         update_stats(current(), RSYS_TO_RUSER);
         return -EINVAL;
     }
-    
+
     struct list_head *semqueue = &(sems[n_sem].semqueue);
 
     /* TODO: Is (sems[n_sem].count == 0) an equivalent checking? */
@@ -458,7 +458,7 @@ int sys_sem_signal(int n_sem)
 int sys_sem_destroy(int n_sem)
 {
     update_stats(current(), RUSER_TO_RSYS);
-   
+
     /* Check user parameters */
     if (n_sem < 0 || n_sem >= NR_SEMS || sems[n_sem].owner_pid == -1) {
         update_stats(current(), RSYS_TO_RUSER);
@@ -514,7 +514,7 @@ int sys_write(int fd, char *buffer, int size)
             update_stats(current(), RSYS_TO_RUSER);
             return -EFAULT;
         }
-        
+
         char sys_buffer[size];
         copy_from_user(buffer, sys_buffer, size);
 
@@ -523,7 +523,7 @@ int sys_write(int fd, char *buffer, int size)
         update_stats(current(), RSYS_TO_RUSER);
         return size;
     }
-    
+
     int i;
     for (i = 0; i < size; i += BUFFER_SIZE) {
 
@@ -549,14 +549,14 @@ int sys_write(int fd, char *buffer, int size)
             update_stats(current(), RSYS_TO_RUSER);
             return -EFAULT;
         }
-        
+
         char sys_buffer[remainder];
         copy_from_user(buffer + size - BUFFER_SIZE, sys_buffer, remainder);
 
         /* Call the requested service routine (hardware dependent) */
         sys_write_console(sys_buffer, remainder);
     }
-    
+
     update_stats(current(), RSYS_TO_RUSER);
     return size;
 }
@@ -578,12 +578,12 @@ int sys_read(int fd, char *buff, int count)
         update_stats(current(), RSYS_TO_RUSER);
         return -EBADF;
     }
-    
+
     if (count < 0) {
         update_stats(current(), RSYS_TO_RUSER);
         return -EINVAL;
     }
-    
+
     /* Checks if buffer pointer points to a valid user space address */
     if (buff == NULL || !access_ok(VERIFY_WRITE, buff, count)) {
         update_stats(current(), RSYS_TO_RUSER);
@@ -597,7 +597,7 @@ int sys_read(int fd, char *buff, int count)
 void *sys_sbrk(int increment)
 {
     update_stats(current(), RUSER_TO_RSYS);
-    
+
     struct task_struct *curr_task_pcb = current();
     void *ret = (void *)curr_task_pcb->heap_break;
     unsigned long heap_break = (unsigned long)(curr_task_pcb->heap_break);
@@ -615,7 +615,7 @@ void *sys_sbrk(int increment)
         if (page_limit < TOTAL_PAGES && num_heap_frames > 0) {
             int resv_heap_frames[num_heap_frames];
             for (i = 0; i < num_heap_frames; i++) {
- 
+
                 /* If there is no enough free frames, those reserved thus far must be freed */
                 if ((resv_heap_frames[i] = alloc_frame()) == -1) {
                     while (i >= 0) free_frame(resv_heap_frames[i--]);
@@ -652,7 +652,7 @@ void *sys_sbrk(int increment)
             num_heap_frames = (heap_break / PAGE_SIZE) - HEAPSTART + 1;
             curr_task_pcb->heap_break = HEAPSTART * PAGE_SIZE;
         }
-        
+
         /* Shiftting one page if needed */
         page_stride = (heap_break % PAGE_SIZE == 0);
 
@@ -661,7 +661,7 @@ void *sys_sbrk(int increment)
             del_ss_pag(curr_pagt, (heap_break / PAGE_SIZE) - i  - page_stride);
         }
     }
-    
+
     set_cr3(get_DIR(curr_task_pcb));
     update_stats(current(), RSYS_TO_RUSER);
     return ret;

@@ -74,7 +74,7 @@ int sys_read_keyboard(char *buff, int count)
 
                 start = &kbd_buff.buff[0];
                 partial_count = kbd_buff.tail;
-                
+
                 if (copy_to_user(start, buff + total_read_keys, partial_count) < 0) {
                     update_stats(current(), RSYS_TO_RUSER);
                     return -1;
@@ -91,7 +91,7 @@ int sys_read_keyboard(char *buff, int count)
                 }
                 total_read_keys += partial_count;
                 read_keys_per_iter += partial_count;
-                *remainder -= total_read_keys; 
+                *remainder -= total_read_keys;
             }
 
             /* Removes read keys from keyboard buffer kbd_buff */
@@ -105,7 +105,7 @@ int sys_read_keyboard(char *buff, int count)
                 block_to_keyboardqueue(0);
             }
         }
-        
+
         /* If the process requests more keys than those available from the keyboard
          * buffer and it's not full, blocks the process until the buffer will be
          * full or the available keys in keyboard buffer satisfy the process request

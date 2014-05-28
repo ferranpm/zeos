@@ -120,7 +120,7 @@ void keyboard_routine()
                 /* TODO: When unblocks the process, do we add it at the end or
                  * start of readyqueue?
                  */
-                
+
                 /* TODO: After unblocks the process, must we perform a
                  * sched_next_rr()?
                  */
