@@ -602,17 +602,17 @@ void *sys_sbrk(int increment)
     void *ret = (void *)curr_task_pcb->heap_break;
     unsigned long heap_break = (unsigned long)(curr_task_pcb->heap_break);
     page_table_entry *curr_pagt = get_PT(curr_task_pcb);
-    int limit = (heap_break + increment) / PAGE_SIZE;
-    int i, num_heap_frames;
+    int page_limit = (heap_break + increment) / PAGE_SIZE;
+    int i, num_heap_frames, extra_heap_frame, page_stride;
     if (increment > 0) {
-        printk("VULL DEMANAR MEMORIA\n");
 
-        /* (heap_break % PAGE_SIZE == 0) indicates if we need an extra frame
-         * in case when heap_break is multiple of PAGE_SIZE
+        /* ((heap_break + increment) % PAGE_SIZE != 0) & (heap_break % PAGE_SIZE == 0)
+         * indicates if we need an extra frame for the heap dynaimc allocation
          */
-        num_heap_frames = limit - (heap_break / PAGE_SIZE) + (heap_break % PAGE_SIZE == 0);
+        extra_heap_frame = ((heap_break + increment) % PAGE_SIZE != 0) & (heap_break % PAGE_SIZE == 0);
+        num_heap_frames = page_limit - (heap_break / PAGE_SIZE) + extra_heap_frame;
 
-        if (limit < TOTAL_PAGES && num_heap_frames > 0) {
+        if (page_limit < TOTAL_PAGES && num_heap_frames > 0) {
             int resv_heap_frames[num_heap_frames];
             for (i = 0; i < num_heap_frames; i++) {
  
@@ -624,30 +624,41 @@ void *sys_sbrk(int increment)
                 }
             }
 
+            /* Shiftting one page if needed */
+            page_stride = (heap_break % PAGE_SIZE != 0);
+
             for (i = 0; i < num_heap_frames; i++) {
 
                 /* (heap_break % PAGE_SIZE != 0) indicates if we need to associate
                  * extra page in case when heap_break is not multiple of PAGE_SIZE
                  */
-                set_ss_pag(curr_pagt, (heap_break / PAGE_SIZE) + i + (heap_break % PAGE_SIZE != 0), resv_heap_frames[i]);
+                set_ss_pag(curr_pagt, (heap_break / PAGE_SIZE) + i + page_stride, resv_heap_frames[i]);
             }
         }
         curr_task_pcb->heap_break += increment;
     }
     else if (increment < 0) {
-        printk("VULL ALLIBERAR MEMORIA\n");
-        if (limit >= HEAPSTART) {
-            num_heap_frames = (heap_break / PAGE_SIZE) - limit;
-            printk("LIMIT >= HEAPSTART\n");
+        if (page_limit >= HEAPSTART) {
+
+            /* ((heap_break + increment) % PAGE_SIZE == 0) indicates
+            * if we need an extra frame for the heap dynaimc deallocation
+            */
+            extra_heap_frame = ((heap_break + increment) % PAGE_SIZE == 0);
+
+            num_heap_frames = (heap_break / PAGE_SIZE) - page_limit + extra_heap_frame;
             curr_task_pcb->heap_break += increment;
         }
         else {
             num_heap_frames = (heap_break / PAGE_SIZE) - HEAPSTART + 1;
-            curr_task_pcb->heap_break = HEAPSTART;
+            curr_task_pcb->heap_break = HEAPSTART * PAGE_SIZE;
         }
+        
+        /* Shiftting one page if needed */
+        page_stride = (heap_break % PAGE_SIZE == 0);
+
         for (i = 0; i < num_heap_frames; i++) {
-            free_frame(get_frame(curr_pagt, (heap_break / PAGE_SIZE) - i));
-            del_ss_pag(curr_pagt, (heap_break / PAGE_SIZE) - i);
+            free_frame(get_frame(curr_pagt, (heap_break / PAGE_SIZE) - i - page_stride));
+            del_ss_pag(curr_pagt, (heap_break / PAGE_SIZE) - i  - page_stride);
         }
     }
     
