@@ -99,7 +99,7 @@ void cpu_idle(void)
         :
         :"memory"
     );
-    
+
     while (1);
 }
 
@@ -304,7 +304,7 @@ void block_to_keyboardqueue(int endpoint) {
     if (endpoint == 1) {
         update_current_state_rr(&keyboardqueue);
     }
-    
+
     /* Blocks the current process at the beginning of the keyboardqueue */
     else {
         struct task_struct *pcb_curr_task = current();
@@ -356,7 +356,7 @@ void update_stats(struct task_struct *pcb, enum transition_t trans)
     case READY_TO_RSYS :
         update_stats_ready_to_rsys(pcb);
         break;
-    
+
     case BLOCKED_TO_RSYS :
         update_stats_blocked_to_rsys(pcb);
         break;
