@@ -231,9 +231,6 @@ int sem_destroy(int n_sem)
 
 /* Wrapper for the system call sys_read(int fd, char *buff, int conunt).
  * It has got the entry 30 (0x1E) in the system call table
- *
- * TODO: As the lab manual does not specify nothing, can we use the 30th
- * entry from sys_call_table to map sys_read?
  */
 int read(int fd, char *buff, int count)
 {
@@ -249,9 +246,6 @@ int read(int fd, char *buff, int count)
 
 /* Wrapper for the system call *sys_sbrk(int increment).
  * It has got the entry 15 (0x0F) in the system call table
- *
- * TODO: As the lab manual does not specify nothing, can we use the 15th
- * entry from sys_call_table to map *sys_sbrk?
  */
 void *sbrk(int increment)
 {

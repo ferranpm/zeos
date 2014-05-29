@@ -10,9 +10,6 @@
 union task_union task[NR_TASKS]
 __attribute__((__section__(".data.task")));
 
-/* TODO: Would be better to define this in mm.c and using
- * __attribute__((__section__(".data.task"))); ?
- */
 int dir_pages_refs[NR_TASKS] = {0};
 
 #if 1
@@ -58,19 +55,6 @@ page_table_entry * get_PT (struct task_struct *t)
     return (page_table_entry *)(((unsigned int)(t->dir_pages_baseAddr->bits.pbase_addr))<<12);
 }
 
-/* TODO: Deletes when the new version works fine */
-/*
-int allocate_DIR(struct task_struct *t)
-{
-    int pos;
-    pos = ((int)t-(int)task)/sizeof(union task_union);
-    t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos];
-    return 1;
-}
-*/
-
-/* TODO: Debug it further (currently no works for test 15 of E2 tests suite) */
-
 int allocate_DIR(struct task_struct *t)
 {
     int pos;
@@ -81,7 +65,6 @@ int allocate_DIR(struct task_struct *t)
             return 1;
         }
     }
-    /* TODO: If allocate_DIR finishes with errors, does return -1? */
     return -1;
 }
 
@@ -324,7 +307,7 @@ void unblock_from_keyboardqueue() {
     task_first->state = ST_READY;
     list_del(first);
     list_add_tail(first, &readyqueue);
-    sched_next_rr();
+    if (needs_sched_rr()) sched_next_rr();
 }
 
 void init_stats(struct task_struct *pcb)

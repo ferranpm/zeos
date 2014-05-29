@@ -121,7 +121,6 @@ int sys_fork()
     }
 
     /* Heap region copy management from parent to child */
-    /* TODO: Debug it further */
     unsigned long heap_break = (unsigned long)(pcb_parent->heap_break);
     int num_heap_frames = (heap_break / PAGE_SIZE) - HEAPSTART + (heap_break % PAGE_SIZE != 0);
 
@@ -163,7 +162,6 @@ int sys_fork()
     set_cr3(get_DIR(pcb_parent));
 
     /* Updates child's PCB (only the ones that the child process does not inherit) */
-    /* TODO: Are remainder_reads inherit from parent, or are private per process? */
     PID = new_pid();
     pcb_child->PID = PID;
     pcb_child->state = ST_READY;
@@ -198,7 +196,6 @@ int sys_fork()
     return PID;
 }
 
-/* TODO: Debug it further */
 int sys_clone(void (*function) (void), void *stack)
 {
     update_stats(current(), RUSER_TO_RSYS);
@@ -206,7 +203,6 @@ int sys_clone(void (*function) (void), void *stack)
     int PID = -1;
 
     /* Checks user parameters */
-    /* TODO: How we have to check the size of the user parameters for access_ok()? */
     if (!access_ok(VERIFY_READ, function, sizeof(function)) || !access_ok(VERIFY_WRITE, stack, sizeof(stack))) {
         update_stats(current(), RSYS_TO_RUSER);
         return -EFAULT;
@@ -237,9 +233,6 @@ int sys_clone(void (*function) (void), void *stack)
     pcb_child->PID = PID;
     pcb_child->state = ST_READY;
 
-    /* TODO: Should stats be inherited too? */
-    /* init_stats(pcb_child); */
-
     /* Prepares the return of child process. It must return 0
      * and its kernel_esp must point to the top of the stack
      */
@@ -252,10 +245,8 @@ int sys_clone(void (*function) (void), void *stack)
     unsigned int stack_stride = (ebp - (unsigned int)parent)/sizeof(unsigned long);
 
     /* Dummy value for ebp for the child process */
-    /* TODO: Is it necessary with sys_clone? */
     child->stack[stack_stride-1] = 0;
 
-    /* TODO: Is it necessary with sys_clone? */
     child->stack[stack_stride] = (unsigned long)&ret_from_fork;
 
     child->task.kernel_esp = &child->stack[stack_stride-1];
@@ -273,7 +264,6 @@ int sys_clone(void (*function) (void), void *stack)
     list_add_tail(&(pcb_child->list), &readyqueue);
 
     /* If current process is idle, immediately removes from the CPU */
-    /* TODO: Is it necessary with sys_clone? */
     if (current()->PID == 0) sched_next_rr();
 
     update_stats(current(), RSYS_TO_RUSER);
@@ -289,17 +279,13 @@ void sys_exit()
      * and schedules the next task to be executed by the CPU
      */
 
-    /* TODO: Modifies the compare statement to "== 0" */
     if (--dir_pages_refs[POS_TO_DIR_PAGES_REFS(get_DIR(current()))] <= 0) {
         free_user_pages(current());
     }
 
-    /* TODO: Must we find if this process has a semaphore and, if it's true, destroys it? */
     int i;
     for (i = 0; i < NR_SEMS; i++) {
         if (sems[i].owner_pid == current()->PID) {
-
-            /* TODO: What happens if sem_destroy returns error? */
             sys_sem_destroy(i);
         }
     }
@@ -340,20 +326,6 @@ int sys_get_stats(int pid, struct stats *st)
             i++;
         }
     }
-
-    /* TODO: We can leave the current version or implements this will increase the qualityt of ZeOS implementation? */
-    /* Comment this section for future improvements on ZeOS
-    else {
-        struct list_head *pt_list;
-        list_for_each(pt_list, &readyqueue) {
-            struct task_struct *pcb = list_head_to_task_struct(pt_list);
-            if ((pcb->PID == pid) && (pcb->state == ST_READY)) {
-                desired_pcb = pcb;
-                break;
-            }
-        }
-    }
-    */
 
     if (desired_pcb == NULL) {
         update_stats(current(), RSYS_TO_RUSER);
@@ -417,8 +389,6 @@ int sys_sem_wait(int n_sem)
     /* Assures that the semaphore was destroyed while the process is blocked */
     if (sems[n_sem].owner_pid == -1) {
         update_stats(current(), RSYS_TO_RUSER);
-
-        /* TODO. If we change the return value, all tests are also correct. Which would be the proper value to return in this case? */
         return -EPERM;
     }
 
@@ -438,7 +408,6 @@ int sys_sem_signal(int n_sem)
 
     struct list_head *semqueue = &(sems[n_sem].semqueue);
 
-    /* TODO: Is (sems[n_sem].count == 0) an equivalent checking? */
     if (list_empty(semqueue)) ++sems[n_sem].count;
     else {
         struct list_head *elem = list_first(semqueue);
@@ -447,7 +416,6 @@ int sys_sem_signal(int n_sem)
         unblocked->state = ST_READY;
         list_add_tail(elem, &readyqueue);
 
-        /* TODO: Is this transition correct, or should be BLOCKED_TO_READY directly? */
         update_stats(current(), BLOCKED_TO_RSYS);
     }
 
@@ -479,7 +447,6 @@ int sys_sem_destroy(int n_sem)
         unblocked->state = ST_READY;
         list_add_tail(elem, &readyqueue);
 
-        /* TODO: Is this transition correct, or should be BLOCKED_TO_READY directly? */
         update_stats(unblocked, BLOCKED_TO_RSYS);
     }
 

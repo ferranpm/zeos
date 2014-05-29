@@ -17,7 +17,7 @@ ENTRY (sys_call_table)
     .long sys_ni_syscall
     .long sys_ni_syscall
     .long sys_ni_syscall
-    .long sys_sbrk /* 15 TODO: Temporal entry */
+    .long sys_sbrk /* 15 */
     .long sys_ni_syscall
     .long sys_ni_syscall
     .long sys_ni_syscall
@@ -32,7 +32,7 @@ ENTRY (sys_call_table)
     .long sys_ni_syscall
     .long sys_ni_syscall
     .long sys_ni_syscall
-    .long sys_read       /* 30 TODO: Temporal entry */
+    .long sys_read       /* 30 */
     .long sys_ni_syscall
     .long sys_ni_syscall
     .long sys_ni_syscall
